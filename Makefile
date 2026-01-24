@@ -9,26 +9,26 @@ NAME_WIN := $(NAME).exe
 BUILD    := build
 BIN      := bin
 
-CFLAGS   := -std=c99 -Wall -Wextra -Werror -Iinclude -pthread
-LDFLAGS  := -lm
-
-# === Dossier source ===
-
-# Projet "tracker_modulaire" : headers dans include/, sources dans src/
 INCLUDES := -Iinclude
 
-MODULES  := src
+CFLAGS_COMMON := -Wall -Wextra -Werror -Iinclude
+CFLAGS_C99    := -std=c99
+CFLAGS_LINUX  := -pthread
+CFLAGS_WIN    :=
 
-# === où se trouve le main() ===
+LDFLAGS  := -lm
 
+# === Sources ===
 # On exclut le fichier de test des builds normal/win
 SRC := $(filter-out src/test_hunt_rules.c, $(wildcard src/*.c))
 
-OBJ := $(patsubst %.c, $(BUILD)/%.o, $(SRC))
+OBJ      := $(patsubst %.c, $(BUILD)/%.o, $(SRC))
+OBJ_WIN  := $(patsubst %.c, $(BUILD)/win/%.o, $(SRC))
 
-# === Règles ===
-
+# === Phony ===
 .PHONY: all win clean debug release run test
+
+# === Build Linux ===
 
 all: $(BIN)/$(NAME)
 
@@ -36,29 +36,33 @@ $(BIN)/$(NAME): $(OBJ)
 	@mkdir -p $(BIN)
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-# Compilation de chaque .c en .o dans le dossier build/
 $(BUILD)/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS_C99) $(CFLAGS_COMMON) $(CFLAGS_LINUX) $(INCLUDES) -c $< -o $@
 
-# === Compilation Windows (.exe) ===
+# === Build Windows (.exe) ===
 
-win: CFLAGS += -std=c11 -O2
-win: clean
+win: $(BIN)/$(NAME_WIN)
+
+$(BIN)/$(NAME_WIN): $(OBJ_WIN)
 	@echo "====> Compilation pour Windows (.exe)"
 	@mkdir -p $(BIN)
-	@$(CC_WIN) $(CFLAGS) $(INCLUDES) $(SRC) -o $(BIN)/$(NAME_WIN) -lm $(LDFLAGS)
+	$(CC_WIN) $^ -o $@ $(LDFLAGS)
 	@echo "====> Fichier généré : $(BIN)/$(NAME_WIN)"
 
-# === Autres règles ===
+$(BUILD)/win/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC_WIN) $(CFLAGS_C99) $(CFLAGS_COMMON) $(CFLAGS_WIN) $(INCLUDES) -c $< -o $@
+
+# === Règles utilitaires ===
 
 run: all
 	./$(BIN)/$(NAME)
 
-debug: CFLAGS += -g -DDEBUG
+debug: CFLAGS_COMMON += -g -DDEBUG
 debug: clean all
 
-release: CFLAGS += -O2
+release: CFLAGS_COMMON += -O2
 release: clean all
 
 clean:
@@ -71,5 +75,5 @@ TEST_SRC  := src/test_hunt_rules.c src/hunt_rules.c
 
 test:
 	@mkdir -p $(BIN)
-	$(CC) $(CFLAGS) $(INCLUDES) $(TEST_SRC) -o $(BIN)/$(TEST_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS_C99) $(CFLAGS_COMMON) $(CFLAGS_LINUX) $(INCLUDES) $(TEST_SRC) -o $(BIN)/$(TEST_NAME) $(LDFLAGS)
 	./$(BIN)/$(TEST_NAME) tests/hunt_rules_cases.txt
