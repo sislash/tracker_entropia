@@ -259,16 +259,24 @@ void	menu_principale(void)
 			offset = session_count_data_lines(tm_path_hunt_csv());
 			session_save_offset(tm_path_session_offset(), offset);
 			printf("OK : Offset session = %ld ligne(s) (fin CSV)\n", offset);
+			ui_wait_enter();
 		}
 		else if (choice == 8)
 		{
 			session_save_offset(tm_path_session_offset(), 0);
 			printf("OK : Offset session remis a 0\n");
+			ui_wait_enter();
 		}
 		else if (choice == 9)
+		{
 			menu_clear_csv();
+			ui_wait_enter();
+		}
 		else if (choice != 0)
+		{
 			printf("Choix inconnu. Entre un nombre (0-9).\n");
+			ui_wait_enter();
+		}
 	}
 	
 	parser_thread_stop();

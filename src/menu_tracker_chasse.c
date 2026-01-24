@@ -261,11 +261,20 @@ void	menu_tracker_chasse(void)
 		else if (choice == 3)
 			parser_thread_stop();
 		else if (choice == 4)
+		{
 			menu_weapon_reload();
+			ui_wait_enter();
+		}
 		else if (choice == 5)
+		{
 			menu_weapon_choose();
+			ui_wait_enter();
+		}
 		else if (choice == 6)
+		{
 			menu_weapon_show_active();
+			ui_wait_enter();
+		}
 		else if (choice == 7)
 		{
 			offset = session_load_offset(tm_path_session_offset());
@@ -288,9 +297,13 @@ void	menu_tracker_chasse(void)
 			offset = session_count_data_lines(tm_path_hunt_csv());
 			session_save_offset(tm_path_session_offset(), offset);
 			printf("\nOK : Offset session = %ld ligne(s) (fin CSV)\n\n", offset);
+			ui_wait_enter();
 		}
 		else if (choice != 0)
+		{
 			printf("Choix inconnu. Entre un nombre (0-9).\n");
+			ui_wait_enter();
+		}
 	}
 	
 	parser_thread_stop();
