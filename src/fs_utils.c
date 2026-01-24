@@ -16,8 +16,6 @@
 # define TM_PATH_SEP '/'
 #endif
 
-#include <stdio.h>
-
 #ifdef _WIN32
 # include <share.h>
 FILE *fs_fopen_shared_read(const char *path)
@@ -35,11 +33,11 @@ FILE *fs_fopen_shared_read(const char *path)
  * * Crée récursivement les dossiers parents d'un fichier.
  ** Exemple: "logs/hunt_log.csv" => crée "logs/"
  */
-int	fs_mkdir_p_for_file(const char *filepath)
+int fs_mkdir_p_for_file(const char *filepath)
 {
-	char	tmp[1024];
-	size_t	len;
-	size_t	i;
+	char    tmp[1024];
+	size_t  len;
+	size_t  i;
 	
 	if (!filepath || !*filepath)
 		return (-1);
@@ -50,7 +48,7 @@ int	fs_mkdir_p_for_file(const char *filepath)
 	
 	strcpy(tmp, filepath);
 	
-	/* on s'arrête au dernier séparateur */
+	/* couper au dernier séparateur */
 	for (i = len; i > 0; --i)
 	{
 		if (tmp[i] == '/' || tmp[i] == '\\')
@@ -60,24 +58,24 @@ int	fs_mkdir_p_for_file(const char *filepath)
 		}
 	}
 	
-	if (i == 0){
+	if (i == 0)
 		return (0); /* pas de dossier à créer */
 		
-		/* création récursive */
-		for (i = 1; tmp[i]; ++i)
+	/* création récursive */
+	for (i = 1; tmp[i]; ++i)
+	{
+		if (tmp[i] == '/' || tmp[i] == '\\')
 		{
-			if (tmp[i] == '/' || tmp[i] == '\\')
-			{
-				tmp[i] = '\0';
-				if (TM_MKDIR(tmp) != 0 && errno != EEXIST)
-					return (-1);
-				tmp[i] = TM_PATH_SEP;
-			}
+			char saved = tmp[i];
+			tmp[i] = '\0';
+			if (TM_MKDIR(tmp) != 0 && errno != EEXIST)
+				return (-1);
+			tmp[i] = saved;
 		}
-		
-		if (TM_MKDIR(tmp) != 0 && errno != EEXIST)
-			return (-1);
 	}
+	if (TM_MKDIR(tmp) != 0 && errno != EEXIST)
+		return (-1);
+	
 	return (0);
 }
 
