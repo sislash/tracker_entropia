@@ -244,6 +244,7 @@ void	menu_tracker_chasse(void)
 	choice = -1;
 	while (choice != 0)
 	{
+		ui_clear_screen();
 		print_status();
 		print_menu();
 		
