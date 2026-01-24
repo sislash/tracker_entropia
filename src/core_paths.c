@@ -1,0 +1,33 @@
+#include "core_paths.h"
+#include "fs_utils.h"
+
+const char	*tm_path_hunt_csv(void)
+{
+	return (TM_FILE_HUNT_CSV);
+}
+
+/* core_paths.c */
+const char *tm_path_options_cfg(void)
+{
+	return (TM_FILE_OPTIONS_CFG);
+}
+
+const char	*tm_path_session_offset(void)
+{
+	return (TM_FILE_SESSION_OFFSET);
+}
+
+const char	*tm_path_weapon_selected(void)
+{
+	return (TM_FILE_WEAPON_SELECTED);
+}
+
+const char	*tm_path_armes_ini(void)
+{
+	return (TM_FILE_ARMES_INI);
+}
+
+int	tm_ensure_logs_dir(void)
+{
+	return (fs_ensure_dir(TM_DIR_LOGS));
+}
