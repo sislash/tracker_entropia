@@ -26,6 +26,7 @@ int	csv_split_n(char *line, char **out, int n)
 
 	if (!line || !out || n <= 0)
 		return (0);
+	
 	i = 0;
 	p = line;
 	while (i < n)
@@ -37,16 +38,15 @@ int	csv_split_n(char *line, char **out, int n)
 		{
 			*p = '\0';
 			p++;
+			i++;
+			continue;
 		}
-		else
-		{
-			if (*p)
-				*p = '\0';
-			break;
-		}
-		i++;
+		if (*p)
+			*p = '\0';
+		i++; /* on compte le champ courant */
+		break;
 	}
-	return (i + 1);
+	return (i);
 }
 
 void	csv_write_field(FILE *f, const char *s)
