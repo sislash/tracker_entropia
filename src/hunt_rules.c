@@ -303,6 +303,17 @@ int	hunt_should_ignore_line(const char *line)
 		return (1);
 	if (strstr(line, "[Débutant]") != NULL)
 		return (1);
+	
+	/* Canaux communautaires / trade / social */
+	if (strstr(line, "[#"))
+		return (1);
+	
+	/* Tags spécifiques parasites signalés */
+	if (strstr(line, "[ROCKtropia") != NULL)
+		return (1);
+	if (strstr(line, "[HyperStim") != NULL)
+		return (1);
+	
 	return (0);
 }
 
