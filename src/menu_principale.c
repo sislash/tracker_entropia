@@ -74,12 +74,12 @@ void print_status(void)
 	printf("|  TRACKER MODULAIRE  |  Entropia Universe (C99)                            |\n");
 	printf("|===========================================================================|\n");
 	
-	printf("|Etat parser      : %s                                                      |\n",
+	printf("|Etat parser      : %s                                     |\n",
 		   parser_thread_is_running() ? "EN COURS (RUNNING)" : "ARRETE (STOPPED)");
-	printf("|Arme active      : %s                                                      |\n", weapon[0] ? weapon : "(aucune)");
-	printf("|Session (offset) : %ld ligne(s) de donnees                                 |\n", offset);
-	printf("|CSV log          : %s                                                      |\n", tm_path_hunt_csv());
-	printf("|Armes config     : %s                                                      |\n", tm_path_armes_ini());
+	printf("|Arme active      : %s                         |\n", weapon[0] ? weapon : "(aucune)");
+	printf("|Session (offset) : %ld ligne(s) de donnees                                  |\n", offset);
+	printf("|CSV log          : %s                                       |\n", tm_path_hunt_csv());
+	printf("|Armes config     : %s                                                |\n", tm_path_armes_ini());
 	print_hr();
 	
 	/* Aide "intelligente" : coût/tir + warnings simples */
