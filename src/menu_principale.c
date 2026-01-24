@@ -177,16 +177,12 @@ static void	menu_show_stats(void)
 	if (tracker_stats_compute(tm_path_hunt_csv(), offset, &s) != 0)
 	{
 		printf("[ERROR] cannot compute stats (missing CSV?)\n");
-		printf("Press ENTER to continue...");
-		fflush(stdout);
-		getchar();
+		ui_wait_enter();
 		return ;
 	}
 	tracker_view_print(&s);
 	
-	printf("Press ENTER to return to menu...");
-	fflush(stdout);
-	getchar();
+	ui_wait_enter();
 }
 
 static void	menu_clear_csv(void)
