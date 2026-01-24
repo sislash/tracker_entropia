@@ -32,7 +32,6 @@ static void init_storage(void)
 
 void	print_status(void)
 {
-	
 	char				weapon[128];
 	long				offset;
 	int					ini_ok;
@@ -61,7 +60,7 @@ void	print_status(void)
 	if (!weapon[0])
 		return ;
 	memset(&db, 0, sizeof(db));
-	if (armes_db_load(&db, tm_path_armes_ini()) != 0)
+	if (armes_db_load(&db, tm_path_armes_ini()) == 0)
 	{
 		printf("Warning        : failed to load armes.ini\n");
 		return ;
