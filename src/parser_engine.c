@@ -10,19 +10,6 @@
 #include <errno.h>
 #include <string.h>
 
-#ifdef _WIN32
-# include <share.h>
-FILE *tm_fopen_shared_read(const char *path)
-{
-	return _fsopen(path, "rb", _SH_DENYNO);
-}
-#else
-FILE *tm_fopen_shared_read(const char *path)
-{
-	return fopen(path, "rb");
-}
-#endif
-
 static void	log_engine_error(const char *ctx, const char *path)
 {
 	FILE *f = fopen("logs/parser_debug.log", "ab");
@@ -69,7 +56,7 @@ int	parser_run_replay(const char *chatlog_path, const char *csv_path,
 	FILE	*out;
 	char	buf[2048];
 
-	in = tm_fopen_shared_read(chatlog_path);
+	in = fs_fopen_shared_read(chatlog_path);
 	if (!in)
 	{
 		log_engine_error("open chatlog", chatlog_path);
@@ -119,7 +106,7 @@ int	parser_run_live(const char *chatlog_path, const char *csv_path,
 	char	buf[2048];
 	long	last_pos;
 	
-	in = tm_fopen_shared_read(chatlog_path);
+	in = fs_fopen_shared_read(chatlog_path);
 	if (!in)
 	{
 		log_engine_error("open chatlog", chatlog_path);
@@ -163,7 +150,7 @@ int	parser_run_live(const char *chatlog_path, const char *csv_path,
 			if (sz >= 0 && sz < last_pos)
 			{
 				fclose(in);
-				in = tm_fopen_shared_read(chatlog_path);
+				in = fs_fopen_shared_read(chatlog_path);
 				if (!in)
 				{
 					/* le fichier est peut-être lock/rotating : on attend et on retente */
