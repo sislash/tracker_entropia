@@ -1,0 +1,18 @@
+# Build
+build/
+
+# Logs runtime
+logs/*.csv
+logs/*.offset
+logs/*.txt
+
+# Objets compilés
+*.o
+
+# Exécutables Linux
+bin/tracker_modulaire.exe
+
+# Fichiers temporaires
+*.tmp
+*.swp
+*.bak
