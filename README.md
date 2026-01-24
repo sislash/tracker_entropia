@@ -168,6 +168,71 @@ Ce coût est ensuite multiplié par le nombre de `SHOT` détectés.
 
 ---
 
+## 💧 Tracker Sweat (Vibrant Sweat)
+
+Le tracker intègre une **option dédiée au suivi du Vibrant Sweat**, conçue spécifiquement pour la mécanique de **sweating** dans *Entropia Universe*.
+
+### 🎯 Objectifs du tracker Sweat
+
+- Compter **le total de Vibrant Sweat collecté**
+- Compter **le nombre d’extractions de sweat**
+- Calculer une **moyenne de sweat par extraction**
+- **Ne jamais fausser les statistiques de chasse**
+
+⚠️ Le sweat **n’est pas un loot classique** et **ne doit jamais être assimilé à un kill**.
+
+Caractéristiques :
+- Quantité reçue : **1 à 4 unités** par extraction
+- Valeur PED : toujours `0.0000`
+- Canal : **System / Système uniquement**
+
+---
+
+### 📊 Statistiques Sweat disponibles
+
+Lorsque des extractions de sweat sont détectées, le dashboard affiche :
+
+- **Nombre d’extractions**
+- **Total de Vibrant Sweat**
+- **Moyenne par extraction**
+
+Exemple :
+
+SWEAT
+Extractions : 42
+Vibrant Sweat total : 118
+Moy / extraction : 2.81
+
+---
+
+### 🔧 Activation / désactivation
+
+Le tracker Sweat est **optionnel**.
+
+#### Depuis le menu :
+
+Menu chasse
+→ 10) Activer / Désactiver tracker Sweat
+
+L’état est **persistant** et stocké dans :
+
+logs/options.cfg
+
+Contenu :
+
+sweat_tracker=1 # activé
+sweat_tracker=0 # désactivé
+
+---
+
+### 🔕 Comportement lorsque l’option est désactivée
+
+- Les lignes `Vibrant Sweat` sont **ignorées**
+- Aucun événement `SWEAT` n’est enregistré
+- Aucune statistique sweat n’est calculée
+
+---
+
 ## 🚀 Guide rapide – première utilisation (5 minutes)
 
 ⚠️ **Avant toute chose**, il est nécessaire de récupérer correctement le projet depuis GitHub.
