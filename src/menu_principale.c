@@ -15,11 +15,13 @@
 #include <stdio.h>
 #include <string.h>
 
-void	print_status(void);
+/* ************************************************************************** */
+/*  Helpers                                                                   */
+/* ************************************************************************** */
 
-static void init_storage(void)
+static void	init_storage(void)
 {
-	FILE *f;
+	FILE	*f;
 	
 	tm_ensure_logs_dir();
 	f = fopen(tm_path_hunt_csv(), "ab");
@@ -30,7 +32,27 @@ static void init_storage(void)
 	}
 }
 
-void	print_status(void)
+static int	read_choice_int(int *out)
+{
+	int	ret;
+	
+	if (!out)
+		return (0);
+	ret = scanf("%d", out);
+	ui_flush_stdin();
+	return (ret == 1);
+}
+
+static void	print_hr(void)
+{
+	printf("------------------------------------------------------------\n");
+}
+
+/* ************************************************************************** */
+/*  Status                                                                    */
+/* ************************************************************************** */
+
+void print_status(void)
 {
 	char				weapon[128];
 	long				offset;
@@ -38,86 +60,125 @@ void	print_status(void)
 	armes_db			db;
 	const arme_stats	*w;
 	double				cost_shot;
-
+	
 	weapon[0] = '\0';
 	(void)weapon_selected_load(tm_path_weapon_selected(), weapon, sizeof(weapon));
 	offset = session_load_offset(tm_path_session_offset());
-
-	printf("\n=== Tracker Modulaire ===\n");
-	printf("Parser         : %s\n",
-		parser_thread_is_running() ? "RUNNING" : "STOPPED");
-	printf("Active weapon  : %s\n", weapon[0] ? weapon : "(none)");
-	printf("Session offset : %ld data lines\n", offset);
-	printf("CSV            : %s\n", tm_path_hunt_csv());
-
-	/* "Intelligent" helpers: show cost/shot and warnings */
+	
+	/* Tu peux décommenter si tu veux un écran plus “propre” à chaque boucle */
+	/* ui_clear_screen(); */
+	
+	printf("\n");
+	printf("============================================================\n");
+	printf("  TRACKER MODULAIRE  |  Entropia Universe (C99)\n");
+	printf("============================================================\n");
+	
+	printf("Etat parser      : %s\n",
+		   parser_thread_is_running() ? "EN COURS (RUNNING)" : "ARRETE (STOPPED)");
+	printf("Arme active      : %s\n", weapon[0] ? weapon : "(aucune)");
+	printf("Session (offset) : %ld ligne(s) de donnees\n", offset);
+	printf("CSV log          : %s\n", tm_path_hunt_csv());
+	printf("Armes config     : %s\n", tm_path_armes_ini());
+	print_hr();
+	
+	/* Aide "intelligente" : coût/tir + warnings simples */
 	ini_ok = fs_file_exists(tm_path_armes_ini());
 	if (!ini_ok)
 	{
-		printf("Warning        : armes.ini not found (%s)\n", tm_path_armes_ini());
+		printf("⚠ WARNING : Fichier armes.ini introuvable.\n");
+		printf("  -> Cree/Place le fichier ici : %s\n", tm_path_armes_ini());
+		print_hr();
 		return ;
 	}
 	if (!weapon[0])
+	{
+		printf("ℹ Astuce  : Selectionne une arme (menu 1) pour calculer les couts.\n");
+		print_hr();
 		return ;
+	}
 	memset(&db, 0, sizeof(db));
 	if (armes_db_load(&db, tm_path_armes_ini()) == 0)
 	{
-		printf("Warning        : failed to load armes.ini\n");
+		printf("⚠ WARNING : Impossible de lire armes.ini (format/accès).\n");
+		print_hr();
 		return ;
 	}
 	w = armes_db_find(&db, weapon);
 	if (!w)
-		printf("Warning        : active weapon not in armes.ini\n");
+	{
+		printf("⚠ WARNING : L'arme active n'existe pas dans armes.ini.\n");
+		printf("  -> Verifie l'orthographe du nom (section [Nom Exact]).\n");
+	}
 	else
 	{
 		cost_shot = arme_cost_shot(w);
-		printf("Cost/shot      : %.6f PED\n", cost_shot);
+		printf("Cout par tir     : %.6f PED\n", cost_shot);
 	}
 	armes_db_free(&db);
+	print_hr();
 }
+
+/* ************************************************************************** */
+/*  Menu                                                                      */
+/* ************************************************************************** */
 
 static void	print_menu(void)
 {
-	//ui_clear_viewport();
-
-	printf("####### ###    ## ######## ####### ####### ####### ## #######\n");
-	printf("##      ## #   ##    ##    ##   ## ##   ## ##   ## ## ##   ##\n");
-	printf("#####   ##  #  ##    ##    ####### ##   ## ####### ## #######\n");
-	printf("##      ##   # ##    ##    ## ##   ##   ## ##      ## ##   ##\n");
-	printf("####### ##    ###    ##    ##   ## ####### ##      ## ##   ##\n");
-	printf("                                                             \n");
-	printf("          #  # ##   # # #   # #### #### #### ####            \n");
-	printf("          #  # # #  # # #   # #    #  # #    #               \n");
-	printf("=====     #  # # ## # # #   # ###  #### #### ###        =====\n");
-	printf("          #  # #  # # #  # #  #    # #     # #               \n");
-	printf("          #### #   ## #   #   #### #  # #### ####            \n");
-	
-	printf("\n");
-	printf("\n");
-	
-	printf("\n1) Tracker Chasse (full menu)\n");
-	printf("2) Start parser LIVE\n");
-	printf("3) Start parser REPLAY\n");
-	printf("4) Stop parser\n");
-	printf("5) Show stats (from session offset)\n");
-	printf("6) Live dashboard (auto-refresh)\n");
-	printf("7) Set session offset = current CSV end\n");
-	printf("8) Reset session offset = 0\n");
-	printf("9) Clear hunt CSV (type YES)\n");
-	printf("0) Quit\n");
-	printf("Choice: ");
+	printf("|---------------------------------------------------------------------------|\n");
+	printf("|       ####### ###    ## ######## ####### ####### ####### ## #######       |\n");
+	printf("|       ##      ## #   ##    ##    ##   ## ##   ## ##   ## ## ##   ##       |\n");
+	printf("|       #####   ##  #  ##    ##    ####### ##   ## ####### ## #######       |\n");
+	printf("|       ##      ##   # ##    ##    ## ##   ##   ## ##      ## ##   ##       |\n");
+	printf("|       ####### ##    ###    ##    ##   ## ####### ##      ## ##   ##       |\n");
+	printf("|                                                                           |\n");
+	printf("|                 #  # ##   # # #   # #### #### #### ####                   |\n");
+	printf("|                 #  # # #  # # #   # #    #  # #    #                      |\n");
+	printf("|=====            #  # # ## # # #   # ###  #### #### ###               =====|\n");
+	printf("|                 #  # #  # # #  # #  #    # #     # #                      |\n");
+	printf("|                 #### #   ## #   #   #### #  # #### ####                   |\n");
+	printf("|---------------------------------------------------------------------------|\n");
+	printf("|                             MENU PRINCIPAL                                |\n");
+	printf("|                                                                           |\n");
+	printf("|Actions principales                                                        |\n");
+	printf("|---------------------------------------------------------------------------|\n");
+	printf("|  1) Menu Chasse (armes, dashboard, options chasse)                        |\n");
+	printf("|  2) Demarrer le parser en LIVE   (temps reel sur chat.log)                |\n");
+	printf("|  3) Demarrer le parser en REPLAY (relire un chat.log deja rempli)         |\n");
+	printf("|  4) Arreter le parser                                                     |\n");
+	printf("|                                                                           |\n");
+	printf("|Statistiques                                                               |\n");
+	printf("|---------------------------------------------------------------------------|\n");
+	printf("|  5) Afficher les stats (depuis l'offset de session)                       |\n");
+	printf("|  6) Dashboard LIVE (auto-refresh)                                         |\n");
+	printf("|                                                                           |\n");
+	printf("|Session & fichiers                                                         |\n");
+	printf("|---------------------------------------------------------------------------|\n");
+	printf("|  7) Definir l'offset = fin actuelle du CSV (reprendre a zero visuellement)|\n");
+	printf("|  8) Reset offset = 0 (recalculer stats depuis le debut)                   |\n");
+	printf("|  9) Vider le CSV de hunt (demande confirmation)                           |\n");
+	printf("|                                                                           |\n");
+	printf("|  0) Quitter                                                               |\n");
+	printf("|                                                                           |\n");
+	printf("|Choix :                                                                    |\n");
+	printf("|___________________________________________________________________________|\n");
 }
+
+/* ************************************************************************** */
+/*  Actions                                                                   */
+/* ************************************************************************** */
 
 static void	menu_show_stats(void)
 {
-	long		offset;
-	t_hunt_stats	s;
-
+	long			offset;
+	t_hunt_stats		s;
+	
 	memset(&s, 0, sizeof(s));
 	offset = session_load_offset(tm_path_session_offset());
 	if (tracker_stats_compute(tm_path_hunt_csv(), offset, &s) != 0)
 	{
-		printf("[ERROR] cannot compute stats (missing CSV?)\n");
+		printf("\n[ERREUR] Impossible de calculer les stats.\n");
+		printf(" - Verifie que %s existe\n", tm_path_hunt_csv());
+		printf(" - Lance le parser LIVE/REPLAY pour generer des donnees\n\n");
 		return ;
 	}
 	tracker_view_print(&s);
@@ -127,55 +188,60 @@ static void	menu_clear_csv(void)
 {
 	char	confirm[8];
 	FILE	*f;
-
-	printf("Type YES to clear %s: ", tm_path_hunt_csv());
+	
+	printf("\nATTENTION : tu vas vider le fichier :\n%s\n", tm_path_hunt_csv());
+	printf("Tape YES pour confirmer : ");
 	if (scanf("%7s", confirm) != 1)
 	{
 		ui_flush_stdin();
+		printf("Annule.\n");
 		return ;
 	}
 	ui_flush_stdin();
 	if (strcmp(confirm, "YES") != 0)
 	{
-		printf("Cancelled.\n");
+		printf("Annule.\n");
 		return ;
 	}
 	f = fopen(tm_path_hunt_csv(), "w");
 	if (!f)
 	{
-		printf("[ERROR] cannot open CSV for writing\n");
+		printf("[ERREUR] Impossible d'ouvrir le CSV en ecriture.\n");
 		return ;
 	}
 	fclose(f);
-	printf("CSV cleared.\n");
-	/* Optional safety: reset session offset too */
+	printf("OK : CSV vide.\n");
 	session_save_offset(tm_path_session_offset(), 0);
-	printf("Session offset reset to 0\n");
+	printf("OK : Offset session remis a 0.\n");
 }
+
+/* ************************************************************************** */
+/*  Entry point                                                               */
+/* ************************************************************************** */
 
 void	menu_principale(void)
 {
+	int		choice;
+	long		offset;
+	
 	init_storage();
-	int	choice;
-	long	offset;
-
 	if (tm_ensure_logs_dir() != 0)
-		printf("[WARN] cannot create logs/\n");
+		printf("[WARN] impossible de creer logs/\n");
+	
 	choice = -1;
 	while (choice != 0)
 	{
 		print_status();
 		print_menu();
-		if (scanf("%d", &choice) != 1)
+		
+		if (!read_choice_int(&choice))
 		{
-			ui_flush_stdin();
-			continue;
+			printf("Choix invalide. Entre un nombre (0-9).\n");
+			continue ;
 		}
-		ui_flush_stdin();
-		if (choice == 1){
-			print_status();
+		
+		if (choice == 1)
 			menu_tracker_chasse();
-		}
 		else if (choice == 2)
 			parser_thread_start_live();
 		else if (choice == 3)
@@ -190,15 +256,18 @@ void	menu_principale(void)
 		{
 			offset = session_count_data_lines(tm_path_hunt_csv());
 			session_save_offset(tm_path_session_offset(), offset);
-			printf("Session offset set to %ld data lines\n", offset);
+			printf("OK : Offset session = %ld ligne(s) (fin CSV)\n", offset);
 		}
 		else if (choice == 8)
 		{
 			session_save_offset(tm_path_session_offset(), 0);
-			printf("Session offset reset to 0\n");
+			printf("OK : Offset session remis a 0\n");
 		}
 		else if (choice == 9)
 			menu_clear_csv();
+		else if (choice != 0)
+			printf("Choix inconnu. Entre un nombre (0-9).\n");
 	}
+	
 	parser_thread_stop();
 }
