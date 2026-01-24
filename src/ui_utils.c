@@ -6,6 +6,7 @@
 #include <conio.h>   /* _kbhit, _getch */
 #else
 #include <unistd.h>     /* usleep */
+#include <time.h>
 #include <sys/select.h> /* select */
 #endif
 
@@ -18,7 +19,11 @@ void ui_sleep_ms(unsigned ms)
     #ifdef _WIN32
     Sleep((DWORD)ms);
     #else
-    sleep((suseconds_t)ms * 1000);
+    struct timespec ts;
+    
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (ms % 1000) * 1000000L;
+    nanosleep(&ts, NULL);
     #endif
 }
 
