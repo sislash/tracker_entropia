@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <string.h>
 
 static void	log_engine_error(const char *ctx, const char *path)
 {
