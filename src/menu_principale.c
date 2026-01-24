@@ -176,12 +176,17 @@ static void	menu_show_stats(void)
 	offset = session_load_offset(tm_path_session_offset());
 	if (tracker_stats_compute(tm_path_hunt_csv(), offset, &s) != 0)
 	{
-		printf("\n[ERREUR] Impossible de calculer les stats.\n");
-		printf(" - Verifie que %s existe\n", tm_path_hunt_csv());
-		printf(" - Lance le parser LIVE/REPLAY pour generer des donnees\n\n");
+		printf("[ERROR] cannot compute stats (missing CSV?)\n");
+		printf("Press ENTER to continue...");
+		fflush(stdout);
+		getchar();
 		return ;
 	}
 	tracker_view_print(&s);
+	
+	printf("Press ENTER to return to menu...");
+	fflush(stdout);
+	getchar();
 }
 
 static void	menu_clear_csv(void)
