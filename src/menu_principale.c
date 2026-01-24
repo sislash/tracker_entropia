@@ -45,7 +45,7 @@ static int	read_choice_int(int *out)
 
 static void	print_hr(void)
 {
-	printf("------------------------------------------------------------\n");
+	printf("|---------------------------------------------------------------------------|\n");
 }
 
 /* ************************************************************************** */
@@ -69,16 +69,17 @@ void print_status(void)
 	/* ui_clear_screen(); */
 	
 	printf("\n");
-	printf("============================================================\n");
-	printf("  TRACKER MODULAIRE  |  Entropia Universe (C99)\n");
-	printf("============================================================\n");
+	printf("|---------------------------------------------------------------------------|\n");
+	printf("|===========================================================================|\n");
+	printf("|  TRACKER MODULAIRE  |  Entropia Universe (C99)                            |\n");
+	printf("|===========================================================================|\n");
 	
-	printf("Etat parser      : %s\n",
+	printf("|Etat parser      : %s                                                      |\n",
 		   parser_thread_is_running() ? "EN COURS (RUNNING)" : "ARRETE (STOPPED)");
-	printf("Arme active      : %s\n", weapon[0] ? weapon : "(aucune)");
-	printf("Session (offset) : %ld ligne(s) de donnees\n", offset);
-	printf("CSV log          : %s\n", tm_path_hunt_csv());
-	printf("Armes config     : %s\n", tm_path_armes_ini());
+	printf("|Arme active      : %s                                                      |\n", weapon[0] ? weapon : "(aucune)");
+	printf("|Session (offset) : %ld ligne(s) de donnees                                 |\n", offset);
+	printf("|CSV log          : %s                                                      |\n", tm_path_hunt_csv());
+	printf("|Armes config     : %s                                                      |\n", tm_path_armes_ini());
 	print_hr();
 	
 	/* Aide "intelligente" : coût/tir + warnings simples */
@@ -112,7 +113,7 @@ void print_status(void)
 	else
 	{
 		cost_shot = arme_cost_shot(w);
-		printf("Cout par tir     : %.6f PED\n", cost_shot);
+		printf("|Cout par tir     : %.6f PED                                            |\n", cost_shot);
 	}
 	armes_db_free(&db);
 	print_hr();
