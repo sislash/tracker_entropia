@@ -83,18 +83,22 @@ int	parser_run_replay(const char *chatlog_path, const char *csv_path,
 		fclose(in);
 		return (-1);
 	}
+#ifdef DEBUG
 	printf("[DEBUG] CSV opened: %s\n", csv_path);
 	csv_ensure_header6(out);
 	fflush(out);
+#endif
 	
 	while (!stop_flag || *stop_flag == 0)
 	{
 		if (!fgets(buf, sizeof(buf), in)){
 			printf("[DEBUG] REPLAY fgets EOF\n");
-			continue;
+			break;
 		}
+#ifdef DEBUG
 		printf("[DEBUG] LINE: %s", buf);
 		process_line(out, buf);
+#endif
 	}
 	fclose(out);
 	fclose(in);
@@ -104,9 +108,11 @@ int	parser_run_replay(const char *chatlog_path, const char *csv_path,
 int	parser_run_live(const char *chatlog_path, const char *csv_path,
 					volatile int *stop_flag)
 {
+#ifdef DEBUG
 	printf("[DEBUG] LIVE enter stop_flag=%p val=%d\n",
 		   (void*)stop_flag, stop_flag ? *stop_flag : -999);
 	fflush(stdout);
+#endif
 	
 	FILE	*in;
 	FILE	*out;
@@ -127,9 +133,11 @@ int	parser_run_live(const char *chatlog_path, const char *csv_path,
 		fclose(in);
 		return (-1);
 	}
+#ifdef DEBUG
 	printf("[DEBUG] CSV opened: %s\n", csv_path);
 	csv_ensure_header6(out);
 	fflush(out);
+#endif
 	
 	fseek(in, 0, SEEK_END);
 	last_pos = ftell(in);
@@ -179,10 +187,11 @@ int	parser_run_live(const char *chatlog_path, const char *csv_path,
 	fclose(out);
 	fclose(in);
 	
+#ifdef DEBUG
 	printf("[DEBUG] LIVE exit stop_flag=%p val=%d\n",
 		   (void*)stop_flag, stop_flag ? *stop_flag : -999);
 	fflush(stdout);
-	
-	
+#endif
+
 	return (0);
 }
