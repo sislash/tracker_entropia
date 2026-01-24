@@ -1,4 +1,4 @@
-#include "../include/ui_utils.h"
+#include "ui_utils.h"
 #include <stdio.h>
 
 #ifdef _WIN32
