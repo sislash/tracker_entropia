@@ -270,11 +270,15 @@ void	menu_tracker_chasse(void)
 		{
 			offset = session_load_offset(tm_path_session_offset());
 			if (tracker_stats_compute(tm_path_hunt_csv(), offset, &s) == 0)
+			{
 				tracker_view_print(&s);
+				ui_wait_enter();
+			}
 			else
 			{
 				printf("\nAucun CSV trouve : %s\n", tm_path_hunt_csv());
 				printf("-> Lance le parser LIVE/REPLAY.\n\n");
+				ui_wait_enter();
 			}
 		}
 		else if (choice == 8)
