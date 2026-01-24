@@ -102,6 +102,8 @@ static int	start_thread(void)
 {
 	DWORD	id;
 	
+	if (g_th)
+		return (-1);
 	g_stop = 0;
 	g_running = 1;
 	g_th = CreateThread(NULL, 0, thread_fn, NULL, 0, &id);
@@ -128,6 +130,7 @@ static void	join_thread(void)
 # include <pthread.h>
 
 static pthread_t	g_th;
+static int			g_th_created = 0;
 
 static void	*thread_fn(void *p)
 {
@@ -139,20 +142,27 @@ static void	*thread_fn(void *p)
 
 static int	start_thread(void)
 {
+	if (g_th_created)
+		return (-1);
 	g_stop = 0;
 	g_running = 1;
 	if (pthread_create(&g_th, NULL, thread_fn, NULL) != 0)
 	{
 		g_running = 0;
+		g_th_created = 0;
 		return (-1);
 	}
+	g_th_created = 1;
 	return (0);
 }
 
 static void	join_thread(void)
 {
-	if (g_running)
+	if (g_th_created)
+	{
 		pthread_join(g_th, NULL);
+		g_th_created = 0;
+	}
 }
 
 #endif
