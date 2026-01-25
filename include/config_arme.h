@@ -30,14 +30,21 @@ extern "C" {
     typedef struct arme_stats
     {
         char  name[128];         /* Nom de l'arme (section INI) */
+        char  notes[256];        /* Texte libre */
         
         double dpp;              /* Damage Per PEC (ou DPP) */
         double ammo_shot;        /* Coût munition par tir (PED) */
         double decay_shot;       /* Decay arme par tir (PED) */
         double amp_decay_shot;   /* Decay ampli par tir (PED) */
+        
+        /* Legacy */
         double markup;           /* Multiplicateur MU: 1.00=TT, 1.25=125% */
         
-        char  notes[256];        /* Texte libre */
+        /* NEW: MU séparés (EU) */
+        double  ammo_mu;         /* ex: 1.00 */
+        double  weapon_mu;       /* MU de l'arme (L) */
+        double  amp_mu;          /* MU de l'amp (L) */
+        
     } arme_stats;
     
     typedef struct armes_db
