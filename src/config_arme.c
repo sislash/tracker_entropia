@@ -55,11 +55,53 @@ static void arme_defaults(arme_stats *w)
 {
     memset(w, 0, sizeof(*w));
     w->markup = 1.0;
-
+    
     /* NEW (EU) */
     w->ammo_mu = 1.0;
     w->weapon_mu = 0.0; /* 0.0 = non défini */
     w->amp_mu = 0.0;    /* 0.0 = non défini */
+    
+    /* RÈGLE AMP : vide = pas d'amp */
+    w->amp_name[0] = '\0';
+}
+
+/* ============================
+ *  AJOUTS (AMP DB)
+ * ============================ */
+
+static void amp_defaults(amp_stats *a)
+{
+    memset(a, 0, sizeof(*a));
+    a->amp_mu = 1.0;
+}
+
+static int db_amp_push(armes_db *db, const amp_stats *a)
+{
+    amp_stats *tmp;
+    
+    tmp = (amp_stats*)realloc(db->amps.items, (db->amps.count + 1) * sizeof(amp_stats));
+    if (!tmp)
+        return 0;
+    db->amps.items = tmp;
+    db->amps.items[db->amps.count] = *a;
+    db->amps.count++;
+    return 1;
+}
+
+static const amp_stats *find_amp(const armes_db *db, const char *name)
+{
+    size_t i;
+    
+    if (!db || !name || !name[0])
+        return (NULL);
+    i = 0;
+    while (i < db->amps.count)
+    {
+        if (strcmp(db->amps.items[i].name, name) == 0)
+            return (&db->amps.items[i]);
+        i++;
+    }
+    return (NULL);
 }
 
 static int db_push(armes_db *db, const arme_stats *w)
@@ -78,6 +120,11 @@ int armes_db_load(armes_db *db, const char *path)
     
     db->items = NULL;
     db->count = 0;
+    
+    /* IMPORTANT: init AMP DB */
+    db->amps.items = NULL;
+    db->amps.count = 0;
+    
     db->player_name[0] = '\0';
     
     FILE *fp = fopen(path, "r");
@@ -86,10 +133,14 @@ int armes_db_load(armes_db *db, const char *path)
     char line[512];
     
     arme_stats current;
+    amp_stats  current_amp;
+    
     int have_section = 0;
     int in_player_section = 0;
+    int in_amp_section = 0;
     
     arme_defaults(&current);
+    amp_defaults(&current_amp);
     
     while (fgets(line, sizeof(line), fp))
     {
@@ -106,22 +157,37 @@ int armes_db_load(armes_db *db, const char *path)
             if (!end) continue;
             *end = '\0';
             
-            /* Sauvegarde de la section arme précédente */
-            if (have_section && !in_player_section)
-                (void)db_push(db, &current);
+            /* Sauvegarde de la section précédente (arme/amp) */
+            if (have_section)
+            {
+                if (in_amp_section)
+                    (void)db_amp_push(db, &current_amp);
+                else if (!in_player_section)
+                    (void)db_push(db, &current);
+            }
             
             /* Nouvelle section */
             have_section = 1;
             in_player_section = 0;
+            in_amp_section = 0;
             
-            if (strcmp(p + 1, "PLAYER") == 0)
+            /* Nom de section */
+            const char *sec = p + 1;
+            
+            if (strcmp(sec, "PLAYER") == 0)
             {
                 in_player_section = 1;
+            }
+            else if (strncmp(sec, "AMP:", 4) == 0)
+            {
+                in_amp_section = 1;
+                amp_defaults(&current_amp);
+                snprintf(current_amp.name, sizeof(current_amp.name), "%s", sec + 4);
             }
             else
             {
                 arme_defaults(&current);
-                snprintf(current.name, sizeof(current.name), "%s", p + 1);
+                snprintf(current.name, sizeof(current.name), "%s", sec);
             }
             continue;
         }
@@ -141,6 +207,21 @@ int armes_db_load(armes_db *db, const char *path)
         {
             if (strcmp(key, "name") == 0)
                 snprintf(db->player_name, sizeof(db->player_name), "%s", val);
+            continue;
+        }
+        
+        /* Section AMP */
+        if (in_amp_section)
+        {
+            if (strcmp(key, "amp_decay_shot") == 0)
+                (void)parse_double_flex(val, &current_amp.amp_decay_shot);
+            else if (strcmp(key, "amp_mu") == 0)
+            {
+                (void)parse_double_flex(val, &current_amp.amp_mu);
+                if (current_amp.amp_mu <= 0.0) current_amp.amp_mu = 1.0;
+            }
+            else if (strcmp(key, "notes") == 0)
+                snprintf(current_amp.notes, sizeof(current_amp.notes), "%s", val);
             continue;
         }
         
@@ -173,11 +254,48 @@ int armes_db_load(armes_db *db, const char *path)
         {
             snprintf(current.notes, sizeof(current.notes), "%s", val);
         }
+        else if (strcmp(key, "amp") == 0)
+        {
+            strncpy(current.amp_name, val, sizeof(current.amp_name) - 1);
+            current.amp_name[sizeof(current.amp_name) - 1] = '\0';
+        }
     }
     
-    /* push dernière section arme si besoin */
-    if (have_section && !in_player_section)
-        (void)db_push(db, &current);
+    /* push dernière section (arme ou amp) si besoin */
+    if (have_section)
+    {
+        if (in_amp_section)
+            (void)db_amp_push(db, &current_amp);
+        else if (!in_player_section)
+            (void)db_push(db, &current);
+    }
+    
+    /* LIAISON: arme -> amp (APRÈS avoir tout push) */
+    size_t i;
+    const amp_stats *amp;
+    
+    i = 0;
+    while (i < db->count)
+    {
+        /* RÈGLE: si amp_name vide → pas d'amp */
+        if (db->items[i].amp_name[0] != '\0')
+        {
+            amp = find_amp(db, db->items[i].amp_name);
+            if (amp)
+            {
+                db->items[i].amp_decay_shot = amp->amp_decay_shot;
+                db->items[i].amp_mu = amp->amp_mu;
+            }
+            else
+            {
+                fprintf(stderr,
+                        "[WARN] Amp '%s' introuvable pour arme '%s'\n",
+                        db->items[i].amp_name,
+                        db->items[i].name);
+            }
+        }
+        i++;
+    }
     
     fclose(fp);
     return 1;
@@ -187,8 +305,13 @@ void armes_db_free(armes_db *db)
 {
     if (!db) return;
     free(db->items);
+    free(db->amps.items);
     db->items = NULL;
     db->count = 0;
+    
+    db->amps.items = NULL;
+    db->amps.count = 0;
+    
     db->player_name[0] = '\0';
 }
 
@@ -221,4 +344,3 @@ double	arme_cost_shot(const arme_stats *w)
     return (w->ammo_shot
     + (w->decay_shot + w->amp_decay_shot) * w->markup);
 }
-
