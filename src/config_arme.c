@@ -55,6 +55,11 @@ static void arme_defaults(arme_stats *w)
 {
     memset(w, 0, sizeof(*w));
     w->markup = 1.0;
+
+    /* NEW (EU) */
+    w->ammo_mu = 1.0;
+    w->weapon_mu = 0.0; /* 0.0 = non défini */
+    w->amp_mu = 0.0;    /* 0.0 = non défini */
 }
 
 static int db_push(armes_db *db, const arme_stats *w)
@@ -149,6 +154,21 @@ int armes_db_load(armes_db *db, const char *path)
             (void)parse_double_flex(val, &current.markup);
             if (current.markup <= 0.0) current.markup = 1.0;
         }
+        else if (strcmp(key, "ammo_mu") == 0)
+        {
+            (void)parse_double_flex(val, &current.ammo_mu);
+            if (current.ammo_mu <= 0.0) current.ammo_mu = 1.0;
+        }
+        else if (strcmp(key, "weapon_mu") == 0)
+        {
+            (void)parse_double_flex(val, &current.weapon_mu);
+            if (current.weapon_mu <= 0.0) current.weapon_mu = 0.0;
+        }
+        else if (strcmp(key, "amp_mu") == 0)
+        {
+            (void)parse_double_flex(val, &current.amp_mu);
+            if (current.amp_mu <= 0.0) current.amp_mu = 0.0;
+        }
         else if (strcmp(key, "notes") == 0)
         {
             snprintf(current.notes, sizeof(current.notes), "%s", val);
@@ -181,8 +201,24 @@ const arme_stats *armes_db_find(const armes_db *db, const char *name)
     return NULL;
 }
 
-double arme_cost_shot(const arme_stats *w)
+double	arme_cost_shot(const arme_stats *w)
 {
-    if (!w) return 0.0;
-    return w->ammo_shot + (w->decay_shot + w->amp_decay_shot) * w->markup;
+    double	ammo_mu;
+    double	weapon_mu;
+    double	amp_mu;
+    
+    if (!w)
+        return (0.0);
+    if (w->weapon_mu > 0.0 || w->amp_mu > 0.0)
+    {
+        ammo_mu = (w->ammo_mu > 0.0) ? w->ammo_mu : 1.0;
+        weapon_mu = (w->weapon_mu > 0.0) ? w->weapon_mu : 1.0;
+        amp_mu = (w->amp_mu > 0.0) ? w->amp_mu : 1.0;
+        return (w->ammo_shot * ammo_mu
+        + w->decay_shot * weapon_mu
+        + w->amp_decay_shot * amp_mu);
+    }
+    return (w->ammo_shot
+    + (w->decay_shot + w->amp_decay_shot) * w->markup);
 }
+
