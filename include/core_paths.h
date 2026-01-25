@@ -17,7 +17,9 @@
 # define TM_FILE_WEAPON_SELECTED   "logs/weapon_selected.txt"
 # define TM_FILE_ARMES_INI         "armes.ini"
 # define TM_FILE_OPTIONS_CFG       "logs/options.cfg"
+#define TM_FILE_SESSIONS_STATS_CSV "logs/sessions_stats.csv"
 
+const char  *tm_path_sessions_stats_csv(void);
 const char  *tm_path_options_cfg(void);
 const char	*tm_path_hunt_csv(void);
 const char	*tm_path_session_offset(void);
