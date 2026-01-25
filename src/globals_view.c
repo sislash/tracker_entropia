@@ -27,11 +27,6 @@ static void	print_hr(void)
     printf("------------------------------------------------------------\n");
 }
 
-static const char	*yesno(int v)
-{
-    return (v ? "oui" : "non");
-}
-
 static void	print_bar(double v, double vmax)
 {
     int	n;
