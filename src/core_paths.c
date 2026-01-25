@@ -12,6 +12,11 @@ const char *tm_path_options_cfg(void)
 	return (TM_FILE_OPTIONS_CFG);
 }
 
+const char	*tm_path_sessions_stats_csv(void)
+{
+	return (TM_FILE_SESSIONS_STATS_CSV);
+}
+
 const char	*tm_path_session_offset(void)
 {
 	return (TM_FILE_SESSION_OFFSET);
