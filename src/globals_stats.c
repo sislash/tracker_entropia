@@ -147,7 +147,7 @@ static int	is_rare_type(const char *type)
     return (type && strstr(type, "_RARE") != NULL);
 }
 
-static void	fill_top10(t_globals_top out[10], size_t *out_n, t_kv_sum *arr, size_t len)
+static void	fill_top20(t_globals_top out[10], size_t *out_n, t_kv_sum *arr, size_t len)
 {
     size_t	n;
     
@@ -156,8 +156,8 @@ static void	fill_top10(t_globals_top out[10], size_t *out_n, t_kv_sum *arr, size
         return ;
     qsort(arr, len, sizeof(*arr), kv_sum_cmp_desc);
     n = len;
-    if (n > 10)
-        n = 10;
+    if (n > 20)
+        n = 20;
     for (size_t i = 0; i < n; ++i)
     {
         snprintf(out[i].name, sizeof(out[i].name), "%s", arr[i].key ? arr[i].key : "(null)");
@@ -261,9 +261,9 @@ int	globals_stats_compute(const char *csv_path, long start_line, t_globals_stats
     
     fclose(f);
     
-    fill_top10(out->top_mobs, &out->top_mobs_count, mobs, mobs_len);
-    fill_top10(out->top_crafts, &out->top_crafts_count, crafts, crafts_len);
-    fill_top10(out->top_rares, &out->top_rares_count, rares, rares_len);
+    fill_top20(out->top_mobs, &out->top_mobs_count, mobs, mobs_len);
+    fill_top20(out->top_crafts, &out->top_crafts_count, crafts, crafts_len);
+    fill_top20(out->top_rares, &out->top_rares_count, rares, rares_len);
     
     kv_sum_free(mobs, mobs_len);
     kv_sum_free(crafts, crafts_len);
