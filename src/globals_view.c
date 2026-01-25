@@ -20,6 +20,7 @@
 # define COL_NAME   28
 # define COL_VALUE  12
 # define BAR_MAX    30
+# define COL_COUNT   8   /* largeur pour aligner le count */
 
 static void	print_hr(void)
 {
@@ -42,9 +43,10 @@ static void	print_bar(double v, double vmax)
         n = 0;
     if (n > BAR_MAX)
         n = BAR_MAX;
-    while (n-- > 0)
+    
+    for (int i = 0; i < n; ++i)
         putchar('#');
-    while (++n < BAR_MAX - 0)
+    for (int i = n; i < BAR_MAX; ++i)
         putchar(' ');
     /* NOTE: la boucle ci-dessus écrit exactement BAR_MAX chars */
 }
@@ -52,13 +54,17 @@ static void	print_bar(double v, double vmax)
 static void	print_line(size_t idx, const char *name,
                        double sum, long count, double maxsum)
 {
-    /* BAR commence TOUJOURS après " | " => même colonne */
+    /*
+     * * Format:
+     ** 01) <name padded> <sum padded> PED | <bar> | (count padded)
+     ** => tout s'aligne verticalement
+     */
     printf("%2zu) %-*.*s %*.*f PED | ",
            idx,
            COL_NAME, COL_NAME, (name ? name : ""),
            COL_VALUE, 2, sum);
     print_bar(sum, maxsum);
-    printf("  (%ld)\n", count);
+    printf(" | (%*ld)\n", COL_COUNT, count);
 }
 
 static double	max_sum(const t_globals_top *arr, size_t n)
@@ -96,25 +102,21 @@ void	globals_view_print(const t_globals_stats *s)
         return ;
     
     ui_clear_viewport();
-    print_status();
     
-    printf("\n============================================================\n");
+    printf("============================================================\n");
     printf("  DASHBOARD GLOBALS / HOF / ATH (MOB + CRAFT)\n");
     printf("============================================================\n");
     
-    printf("CSV header detecte : %s\n", yesno(s->csv_has_header));
+    printf("CSV header detecte : %s\n", s->csv_has_header ? "oui" : "non");
     printf("Lignes data lues   : %ld\n", s->data_lines_read);
     print_hr();
     
     printf("RESUME\n");
     print_hr();
-    printf("%-22s : %ld (%.2f PED)\n",
-           "Mob events", s->mob_events, s->mob_sum_ped);
-    printf("%-22s : %ld (%.2f PED)\n",
-           "Craft events", s->craft_events, s->craft_sum_ped);
+    printf("%-22s : %ld (%.2f PED)\n", "Mob events", s->mob_events, s->mob_sum_ped);
+    printf("%-22s : %ld (%.2f PED)\n", "Craft events", s->craft_events, s->craft_sum_ped);
     if (s->rare_events > 0)
-        printf("%-22s : %ld (%.4f PED)\n",
-               "Rare events", s->rare_events, s->rare_sum_ped);
+        printf("%-22s : %ld (%.4f PED)\n", "Rare events", s->rare_events, s->rare_sum_ped);
     print_hr();
     
     print_top_block("TOP MOBS (somme PED)", s->top_mobs, s->top_mobs_count);
@@ -127,5 +129,6 @@ void	globals_view_print(const t_globals_stats *s)
         print_top_block("TOP RARE ITEMS (somme PED)", s->top_rares, s->top_rares_count);
     }
     
-    printf("============================================================\n\n");
+    printf("============================================================\n");
+    printf("q = quitter dashboard\n");
 }
