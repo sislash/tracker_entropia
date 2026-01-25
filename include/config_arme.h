@@ -25,12 +25,14 @@
 
 #ifdef __cplusplus
 extern "C" {
-    #endif
+#endif
     
     typedef struct arme_stats
     {
         char  name[128];         /* Nom de l'arme (section INI) */
         char  notes[256];        /* Texte libre */
+        char  amp_name[128];     /* nom de l'amp référencé: ex "A101" */
+        
         
         double dpp;              /* Damage Per PEC (ou DPP) */
         double ammo_shot;        /* Coût munition par tir (PED) */
@@ -47,10 +49,26 @@ extern "C" {
         
     } arme_stats;
     
+    typedef struct s_amp_stats
+    {
+        char    name[128];
+        double  amp_decay_shot;
+        double  amp_mu;
+        char    notes[256];
+    }   amp_stats;
+    
+    typedef struct s_amps_db
+    {
+        amp_stats   *items;
+        size_t      count;
+    }   amps_db;
+    
     typedef struct armes_db
     {
         arme_stats *items;
         size_t count;
+        
+        amps_db amps;
         
         /* AJOUT: nom du joueur lu dans [PLAYER] name=... */
         char player_name[128];
@@ -69,12 +87,15 @@ extern "C" {
      */
     const arme_stats *armes_db_find(const armes_db *db, const char *name);
     
-    /* Calcul coût total par tir (PED), avec MU appliqué.
-     * cost_shot = (ammo + decay + amp_decay) * markup
+    /* Calcule coût total par tir (PED).
+     * - Mode MU séparés (si weapon_mu/amp_mu définis):
+     *     cost = ammo_shot*ammo_mu + decay_shot*weapon_mu + amp_decay_shot*amp_mu
+     * - Fallback legacy (EU-correct):
+     *     cost = ammo_shot + (decay_shot + amp_decay_shot) * markup
      */
     double arme_cost_shot(const arme_stats *w);
     
-    #ifdef __cplusplus
+#ifdef __cplusplus
 }
 #endif
 
