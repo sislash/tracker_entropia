@@ -10,6 +10,7 @@
 #include "weapon_selected.h"
 #include "menu_principale.h"
 #include "sweat_option.h"
+#include "session_export.h"
 
 
 #include <stdio.h>
@@ -277,7 +278,36 @@ void	menu_tracker_chasse(void)
 		else if (choice == 2)
 			parser_thread_start_replay();
 		else if (choice == 3)
+		{
+			t_hunt_stats s;
+			long	start_off;
+			long	end_off;
+			char	ts_start[64];
+			char	ts_end[64];
+			
 			parser_thread_stop();
+			
+			start_off = session_load_offset(tm_path_session_offset());
+			if (tracker_stats_compute(tm_path_hunt_csv(), start_off, &s) == 0)
+			{
+				end_off = session_count_data_lines(tm_path_hunt_csv());
+				session_extract_range_timestamps(tm_path_hunt_csv(), start_off,
+												 ts_start, sizeof(ts_start), ts_end, sizeof(ts_end));
+				
+				if (session_export_stats_csv(tm_path_sessions_stats_csv(), &s, ts_start, ts_end))
+					printf("OK : session exportee dans %s\n", tm_path_sessions_stats_csv());
+				else
+					printf("[WARN] export session CSV impossible.\n");
+				
+				session_save_offset(tm_path_session_offset(), end_off);
+				printf("OK : Offset session = %ld ligne(s)\n", end_off);
+			}
+			else
+			{
+				printf("[ERROR] cannot compute stats for export.\n");
+			}
+			ui_wait_enter();
+		}
 		else if (choice == 4)
 		{
 			menu_weapon_reload();
