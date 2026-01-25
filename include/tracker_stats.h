@@ -13,7 +13,7 @@ typedef struct s_top_mob
 
 typedef struct s_hunt_stats
 {
-	int		csv_has_header;
+	int			csv_has_header;
 	long		data_lines_read;
 
 	long		kills;
