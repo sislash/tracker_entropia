@@ -64,20 +64,36 @@ static void	extract_ts(const char *line, char *out, size_t outsz)
         safe_copy(out, outsz, "");
 }
 
+/* NOUVEAU : accepte EN + FR */
+static int	is_globals_channel(const char *line)
+{
+    if (!line)
+        return (0);
+    if (strstr(line, "[Globals]"))
+        return (1);
+    if (strstr(line, "[Globaux]"))
+        return (1);
+    return (0);
+}
+
+/* NOUVEAU : HOF détecté via "Hall of Fame" (suffix, EN/FR) */
 static int	has_hof(const char *line)
 {
-    return (line && strstr(line, "A record has been added to the Hall of Fame!") != NULL);
+    if (!line)
+        return (0);
+    return (strstr(line, "Hall of Fame") != NULL);
 }
 
 static int	has_ath(const char *line)
 {
-    /* Dans ton chat.log fourni je ne vois pas encore de "ATH" explicite,
-     * donc on supporte plusieurs signatures possibles. */
+    /* ATH pas toujours présent, on supporte large */
     if (!line)
         return (0);
     if (strstr(line, "ALL TIME HIGH") || strstr(line, "All Time High"))
         return (1);
     if (strstr(line, " ATH") || strstr(line, "(ATH") || strstr(line, "ATH!"))
+        return (1);
+    if (strstr(line, "RECORD ABSOLU") || strstr(line, "Record absolu"))
         return (1);
     return (0);
 }
@@ -108,9 +124,9 @@ static int	parse_between_parens(const char *p, char *out, size_t outsz)
 
 static int	parse_value_number(const char *p, double *out)
 {
-    /* récupère un nombre juste après "value of " ou "worth " */
+    /* récupère un nombre juste après "value of " / "worth " / "valeur de" */
     char		buf[64];
-    size_t		i = 0;
+    size_t		i;
     const char	*s;
     char		*end;
     
@@ -119,6 +135,7 @@ static int	parse_value_number(const char *p, double *out)
     s = p;
     while (*s && isspace((unsigned char)*s))
         s++;
+    i = 0;
     while (s[i] && i + 1 < sizeof(buf))
     {
         if (!(isdigit((unsigned char)s[i]) || s[i] == '.' || s[i] == ','))
@@ -158,21 +175,27 @@ static void	set_type(char *dst, size_t dstsz, const char *base, int ath, int hof
 
 int	globals_parse_line(const char *line, t_globals_event *ev)
 {
-    int		hof;
-    int		ath;
-    double	v;
-    
-    const char	*killed = "killed a creature (";
-    const char	*crafted = "constructed an item (";
-    const char	*rare = "has found a rare item (";
-    
+    int			hof;
+    int			ath;
+    double		v;
     const char	*p;
+    
+    /* EN */
+    const char	*killed_en = "killed a creature (";
+    const char	*crafted_en = "constructed an item (";
+    const char	*rare_en = "has found a rare item (";
+    
+    /* FR (formes les + fréquentes, robustes) */
+    const char	*killed_fr = "a tue une creature (";           /* fallback sans accents */
+    const char	*killed_fr2 = "a tué une créature (";          /* avec accents */
+    const char	*crafted_fr = "a construit un objet (";        /* craft */
+    const char	*crafted_fr2 = "a fabriqué un objet (";        /* autre variante */
     
     if (!line || !ev)
         return (0);
     
-    /* On ne prend QUE [Globals] */
-    if (!strstr(line, "[Globals]"))
+    /* NOUVEAU : On ne prend QUE [Globals] ou [Globaux] */
+    if (!is_globals_channel(line))
         return (0);
     
     memset(ev, 0, sizeof(*ev));
@@ -182,8 +205,9 @@ int	globals_parse_line(const char *line, t_globals_event *ev)
     hof = has_hof(line);
     ath = has_ath(line);
     
-    /* 1) MOB: "... killed a creature (Mob) with a value of XX PED!" */
-    p = strstr(line, killed);
+    /* ========================================================= */
+    /* 1) MOB EN : "... killed a creature (Mob) with a value of XX PED!" */
+    p = strstr(line, killed_en);
     if (p)
     {
         if (!parse_between_parens(p, ev->name, sizeof(ev->name)))
@@ -199,8 +223,35 @@ int	globals_parse_line(const char *line, t_globals_event *ev)
         return (1);
     }
     
-    /* 2) CRAFT: "... constructed an item (Item) worth XX PED!" */
-    p = strstr(line, crafted);
+    /* 1bis) MOB FR : "... a tué une créature (Mob) ... valeur de XX PED!" */
+    p = strstr(line, killed_fr2);
+    if (!p)
+        p = strstr(line, killed_fr);
+    if (p)
+    {
+        if (!parse_between_parens(p, ev->name, sizeof(ev->name)))
+            return (0);
+        
+        /* plusieurs formulations possibles */
+        if (strstr(p, "avec une valeur de "))
+            p = strstr(p, "avec une valeur de ") + strlen("avec une valeur de ");
+        else if (strstr(p, "d'une valeur de "))
+            p = strstr(p, "d'une valeur de ") + strlen("d'une valeur de ");
+        else if (strstr(p, "valeur de "))
+            p = strstr(p, "valeur de ") + strlen("valeur de ");
+        else
+            return (0);
+        
+        if (!parse_value_number(p, &v))
+            return (0);
+        snprintf(ev->value, sizeof(ev->value), "%.4f", v);
+        set_type(ev->type, sizeof(ev->type), "MOB", ath, hof);
+        return (1);
+    }
+    
+    /* ========================================================= */
+    /* 2) CRAFT EN : "... constructed an item (Item) worth XX PED!" */
+    p = strstr(line, crafted_en);
     if (p)
     {
         if (!parse_between_parens(p, ev->name, sizeof(ev->name)))
@@ -216,8 +267,36 @@ int	globals_parse_line(const char *line, t_globals_event *ev)
         return (1);
     }
     
-    /* 3) RARE ITEM: "... has found a rare item (X) with a value of 10 PEC!" */
-    p = strstr(line, rare);
+    /* 2bis) CRAFT FR : "... a construit/fabriqué un objet (Item) ... valeur de XX PED!" */
+    p = strstr(line, crafted_fr);
+    if (!p)
+        p = strstr(line, crafted_fr2);
+    if (p)
+    {
+        if (!parse_between_parens(p, ev->name, sizeof(ev->name)))
+            return (0);
+        
+        if (strstr(p, "d'une valeur de "))
+            p = strstr(p, "d'une valeur de ") + strlen("d'une valeur de ");
+        else if (strstr(p, "avec une valeur de "))
+            p = strstr(p, "avec une valeur de ") + strlen("avec une valeur de ");
+        else if (strstr(p, "valant "))
+            p = strstr(p, "valant ") + strlen("valant ");
+        else if (strstr(p, "valeur de "))
+            p = strstr(p, "valeur de ") + strlen("valeur de ");
+        else
+            return (0);
+        
+        if (!parse_value_number(p, &v))
+            return (0);
+        snprintf(ev->value, sizeof(ev->value), "%.4f", v);
+        set_type(ev->type, sizeof(ev->type), "CRAFT", ath, hof);
+        return (1);
+    }
+    
+    /* ========================================================= */
+    /* 3) RARE ITEM EN : "... has found a rare item (X) with a value of 10 PEC!" */
+    p = strstr(line, rare_en);
     if (p)
     {
         if (!parse_between_parens(p, ev->name, sizeof(ev->name)))
@@ -229,7 +308,7 @@ int	globals_parse_line(const char *line, t_globals_event *ev)
         if (!parse_value_number(p, &v))
             return (0);
         
-        /* PEC -> PED si on voit "PEC" (cas exact dans ton log) */
+        /* PEC -> PED si on voit "PEC" */
         if (strstr(p, "PEC"))
             v = v / 100.0;
         
