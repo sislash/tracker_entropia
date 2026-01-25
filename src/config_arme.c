@@ -184,5 +184,5 @@ const arme_stats *armes_db_find(const armes_db *db, const char *name)
 double arme_cost_shot(const arme_stats *w)
 {
     if (!w) return 0.0;
-    return (w->ammo_shot + w->decay_shot + w->amp_decay_shot) * w->markup;
+    return w->ammo_shot + (w->decay_shot + w->amp_decay_shot) * w->markup;
 }
