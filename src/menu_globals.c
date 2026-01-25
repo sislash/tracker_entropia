@@ -16,6 +16,7 @@
 #include "globals_stats.h"
 #include "globals_view.h"
 #include "ui_utils.h"
+#include "ui_key.h"
 
 #include <string.h>
 
@@ -26,14 +27,16 @@ void	menu_globals_dashboard(void)
     while (1)
     {
         memset(&s, 0, sizeof(s));
-        /* start_line = 0 : on lit tout le CSV globals */
         (void)globals_stats_compute(tm_path_globals_csv(), 0, &s);
         globals_view_print(&s);
         
         /* Quit non-bloquant */
-        if (ui_user_wants_quit())
-            break ;
-        
-        ui_sleep_ms(500);
+        if (ui_key_available())
+        {
+            int c = ui_key_getch();
+            if (c == 'q' || c == 'Q' || c == 27)
+                break ;
+        }
+        ui_sleep_ms(250);
     }
 }
