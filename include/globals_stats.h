@@ -15,7 +15,7 @@
 
 # include <stddef.h>
 
-# define GLOBALS_TOP_MAX 20
+# define GLOBALS_TOP_MAX 15
 
 typedef struct s_globals_top
 {
