@@ -82,17 +82,15 @@ void print_status(void)
 	printf("|  TRACKER MODULAIRE  |  Entropia Universe (C99)                            |\n");
 	printf("|===========================================================================|\n");
 	
-	printf("|Parser CHASSE    : %s                                        |\n",
-		   parser_thread_is_running() ? "EN COURS (RUNNING)" : "ARRETE (STOPPED)");
-	printf("|Parser GLOBALS   : %s                                        |\n",
-		   globals_thread_is_running() ? "EN COURS (RUNNING)" : "ARRETE (STOPPED)");
+	print_status_line("Parser CHASSE", parser_thread_is_running() ? "EN COURS (RUNNING)" : "ARRETE (STOPPED)");
+	print_status_line("Parser GLOBALS", globals_thread_is_running() ? "EN COURS (RUNNING)" : "ARRETE (STOPPED)");
+	print_status_line("Arme active", weapon[0] ? weapon : "(aucune)");
+	print_status_linef("Session (offset)", "%ld ligne(s) de donnees", offset);
+	print_status_line("CSV hunt", tm_path_hunt_csv());
+	print_status_line("CSV globals", tm_path_globals_csv());
+	print_status_line("Armes config", tm_path_armes_ini());
+	print_status_line("markup config", tm_path_markup_ini());
 	
-	printf("|Arme active      : %s                       |\n", weapon[0] ? weapon : "(aucune)");
-	printf("|Session (offset) : %ld ligne(s) de donnees                                   |\n", offset);
-	printf("|CSV hunt         : %s                                       |\n", tm_path_hunt_csv());
-	printf("|CSV globals      : %s                                       |\n", tm_path_globals_csv());
-	printf("|Armes config     : %s                                               |\n", tm_path_armes_ini());
-	printf("|markup config    : %s                                               |\n", tm_path_markup_ini());
 	print_hr();
 	
 	ini_ok = fs_file_exists(tm_path_armes_ini());
@@ -125,7 +123,7 @@ void print_status(void)
 	else
 	{
 		cost_shot = arme_cost_shot(w);
-		printf("|Cout par tir     : %.6f PED                                            |\n", cost_shot);
+		print_status_linef("Cout par tir","%.6f PED", cost_shot);
 	}
 	armes_db_free(&db);
 	print_hr();

@@ -1,9 +1,12 @@
 #include "ui_utils.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #include <conio.h>   /* _kbhit, _getch */
+
 #else
 #include <unistd.h>     /* usleep */
 #include <time.h>
@@ -113,6 +116,58 @@ void ui_cursor_home(void)
     fputs("\x1b[H", stdout);
     fflush(stdout);
     #endif
+}
+
+/*
+ * Cette fonction :
+ * tronque si trop long
+ * remplit avec des espaces si trop court
+ * garantit alignement parfait   
+*/
+
+void print_status_line(const char *label, const char *value)
+{
+    char	line[STATUS_WIDTH + 1];
+    int		len;
+    
+    if (!label)
+        label = "";
+    if (!value)
+        value = "";
+    
+    len = snprintf(line, sizeof(line), "%s: %s", label, value);
+    if (len < 0)
+    {
+        memset(line, ' ', STATUS_WIDTH);
+        line[STATUS_WIDTH] = '\0';
+        printf("|%s|\n", line);
+        return ;
+    }
+    
+    if (len < STATUS_WIDTH)
+    {
+        memset(line + len, ' ', STATUS_WIDTH - len);
+        line[STATUS_WIDTH] = '\0';
+    }
+    else
+        line[STATUS_WIDTH] = '\0';
+    
+    printf("|%s|\n", line);
+}
+
+void print_status_linef(const char *label, const char *fmt, ...)
+{
+    char	value[256];
+    va_list	ap;
+    
+    if (!fmt)
+        fmt = "";
+    
+    va_start(ap, fmt);
+    vsnprintf(value, sizeof(value), fmt, ap);
+    va_end(ap);
+    
+    print_status_line(label, value);
 }
 
 /* -------------------------------------------------------------------------- */
