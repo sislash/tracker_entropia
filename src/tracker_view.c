@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 /* ************************************************************************** */
 /*  Small formatting helpers                                                  */
@@ -11,7 +12,21 @@
 
 static void	print_hr(void)
 {
-	printf("------------------------------------------------------------\n");
+	printf("|---------------------------------------------------------------------------|\n");
+}
+
+static double	safe_div(double a, double b)
+{
+	if (b == 0.0)
+		return (0.0);
+	return (a / b);
+}
+
+static double	ratio_pct(double num, double den)
+{
+	if (den <= 0.0)
+		return (0.0);
+	return ((num / den) * 100.0);
 }
 
 static void	print_ped_pec(const char *label, double ped, int decimals_ped)
@@ -19,27 +34,27 @@ static void	print_ped_pec(const char *label, double ped, int decimals_ped)
 	long	pec;
 	
 	pec = (long)llround(ped * 100.0);
-	printf("%-22s : %.*f PED  (%ld PEC)\n", label, decimals_ped, ped, pec);
+	print_status_linef(label, "%.*f PED  (%ld PEC)", decimals_ped, ped, pec);
 }
 
-static void	print_ratio_pct(const char *label, double num, double den)
+static void	print_ratio_pct_line(const char *label, double num, double den)
 {
 	if (den <= 0.0)
 	{
-		printf("%-22s : n/a\n", label);
+		print_status_line(label, "n/a");
 		return ;
 	}
-	printf("%-22s : %.2f %%\n", label, (num / den) * 100.0);
+	print_status_linef(label, "%.2f %%", ratio_pct(num, den));
 }
 
 static void	print_avg_ped(const char *label, double sum, long n, int decimals)
 {
 	if (n <= 0)
 	{
-		printf("%-22s : n/a\n", label);
+		print_status_line(label, "n/a");
 		return ;
 	}
-	printf("%-22s : %.*f\n", label, decimals, sum / (double)n);
+	print_status_linef(label, "%.*f", decimals, safe_div(sum, (double)n));
 }
 
 static const char	*yesno(int v)
@@ -59,109 +74,140 @@ void	tracker_view_print(const t_hunt_stats *s)
 	ui_clear_viewport();
 	print_status();
 	
-	printf("\n============================================================\n");
-	printf("  DASHBOARD CHASSE\n");
-	printf("============================================================\n");
+	/* Header (aligned 75) */
+	printf("|===========================================================================|\n");
+	print_status_line("DASHBOARD", "CHASSE");
+	printf("|===========================================================================|\n");
 	
 	/* Context */
-	printf("CSV header detecte       : %s\n", yesno(s->csv_has_header));
+	print_status_line("CSV header detecte", yesno(s->csv_has_header));
 	if (s->has_weapon && s->weapon_name[0])
-		printf("Arme active              : %s\n", s->weapon_name);
+		print_status_line("Arme active", s->weapon_name);
 	if (s->has_weapon && s->player_name[0])
-		printf("Joueur (armes.ini)       : %s\n", s->player_name);
+		print_status_line("Joueur (armes.ini)", s->player_name);
 	print_hr();
 	
 	/* Quick summary (what people care first) */
-	printf("RESUME\n");
+	print_status_line("RESUME", "");
 	print_hr();
-	printf("%-22s : %ld\n", "Kills", s->kills);
-	printf("%-22s : %ld\n", "Shots", s->shots);
+	
+	/* Regroupement Kills / Shots (sans rien perdre) */
+	print_status_linef("Kills / Shots", "%ld / %ld", s->kills, s->shots);
+	
 	print_ped_pec("Loot total", s->loot_ped, 4);
 	print_ped_pec("Depense utilisee", s->expense_used, 4);
 	print_ped_pec("Net (profit/perte)", s->net_ped, 4);
-	print_ratio_pct("Return", s->loot_ped, s->expense_used);
-	print_ratio_pct("Profit", s->net_ped, s->expense_used);
+	
+	print_ratio_pct_line("Return", s->loot_ped, s->expense_used);
+	print_ratio_pct_line("Profit", s->net_ped, s->expense_used);
 	print_hr();
 	
 	/* Activity */
-	printf("ACTIVITE\n");
-	print_hr();
-	print_avg_ped("Shots / kill", (double)s->shots, s->kills, 2);
-	printf("%-22s : %ld\n", "Loot events", s->loot_events);
-	if (s->expense_events > 0)
-		printf("%-22s : %ld\n", "Expense events", s->expense_events);
-	else
-		printf("%-22s : 0\n", "Expense events");
+	print_status_line("ACTIVITE", "");
 	print_hr();
 	
-	/* Loot breakdown */
-	printf("LOOT (revenus)\n");
+	print_avg_ped("Shots / kill", (double)s->shots, s->kills, 2);
+	
+	/* Regroupement Loot events / Expense events */
+	if (s->expense_events > 0)
+		print_status_linef("Loot/Expense events", "%ld / %ld",
+						   s->loot_events, s->expense_events);
+	else
+		print_status_linef("Loot/Expense events", "%ld / %d",
+							s->loot_events, 0);
+			
 	print_hr();
+		
+		/* Loot breakdown */
+	print_status_line("LOOT (revenus)", "");
+	print_hr();
+	
 	print_avg_ped("Loot / shot", s->loot_ped, s->shots, 6);
 	print_avg_ped("Loot / kill", s->loot_ped, s->kills, 4);
+	
 	print_hr();
 	
-	printf("SWEAT\n");
+	/* Sweat */
+	print_status_line("SWEAT", "");
 	print_hr();
-	printf("%-22s : %ld\n", "Extractions", s->sweat_events);
-	printf("%-22s : %ld\n", "Vibrant Sweat total", s->sweat_total);
+	
+	/* Regroupement Extractions / Total */
+	print_status_linef("Extractions / Total", "%ld / %ld",
+					   s->sweat_events, s->sweat_total);
+	
 	if (s->sweat_events > 0)
 	{
-		printf("%-22s : %.2f\n", "Moy / extraction",
-			   (double)s->sweat_total / (double)s->sweat_events);
+		print_status_linef("Moy / extraction", "%.2f",
+						   safe_div((double)s->sweat_total, (double)s->sweat_events));
 	}
+	else
+		print_status_line("Moy / extraction", "n/a");
+	
 	print_hr();
 	
 	/* Expenses */
-	printf("DEPENSES\n");
+	print_status_line("DEPENSES", "");
 	print_hr();
+	
 	if (s->expense_events > 0)
 		print_ped_pec("Depenses (log CSV)", s->expense_ped_logged, 4);
 	else
-		printf("%-22s : %s\n", "Depenses (log CSV)", "0 (non detecte)");
+		print_status_line("Depenses (log CSV)", "0 (non detecte)");
+	
 	if (s->has_weapon && s->shots > 0)
 	{
 		print_ped_pec("Depenses (modele arme)", s->expense_ped_calc, 4);
 		print_ped_pec("Cout par shot", s->cost_shot, 6);
 	}
 	else
-		printf("%-22s : %s\n", "Modele arme", "n/a (arme absente ou shots=0)");
+		print_status_line("Modele arme", "n/a (arme absente ou shots=0)");
 	
-	printf("%-22s : %s\n", "Source depense",
-		   s->expense_used_is_logged ? "log CSV" : "modele arme");
+	print_status_line("Source depense",
+					  s->expense_used_is_logged ? "log CSV" : "modele arme");
+	
 	print_hr();
 	
 	/* Weapon model details (only if usable) */
 	if (s->has_weapon && s->shots > 0)
 	{
-		printf("DETAILS MODELE ARME (cout / shot)\n");
+		print_status_line("DETAILS MODELE ARME (cout / shot)", "");
 		print_hr();
-		printf("%-22s : %.6f PED\n", "Ammo burn / shot", s->ammo_shot);
-		printf("%-22s : %.6f PED\n", "Weapon decay / shot", s->decay_shot);
-		printf("%-22s : %.6f PED\n", "Amp decay / shot", s->amp_decay_shot);
-		printf("%-22s : x%.3f\n", "Markup (MU)", s->markup);
-		printf("%-22s : %.6f PED\n", "Cout reel / shot", s->cost_shot);
+		
+		print_status_linef("Ammo burn / shot", "%.6f PED", s->ammo_shot);
+		print_status_linef("Weapon decay / shot", "%.6f PED", s->decay_shot);
+		print_status_linef("Amp decay / shot", "%.6f PED", s->amp_decay_shot);
+		print_status_linef("Markup (MU)", "x%.3f", s->markup);
+		print_status_linef("Cout reel / shot", "%.6f PED", s->cost_shot);
+		
 		print_hr();
 	}
 	
 	/* Net details */
-	printf("RESULTAT\n");
+	print_status_line("RESULTAT", "");
 	print_hr();
+	
 	print_avg_ped("Net / shot", s->net_ped, s->shots, 6);
 	print_avg_ped("Net / kill", s->net_ped, s->kills, 4);
+	
 	print_hr();
 	
 	/* Top mobs */
-	printf("TOP MOBS (kills)\n");
+	print_status_line("TOP MOBS (kills)", "");
 	print_hr();
+	
 	if (s->top_mobs_count > 0)
 	{
 		for (size_t i = 0; i < s->top_mobs_count; ++i)
-			printf("%2zu) %-28s %ld\n",
-				   i + 1, s->top_mobs[i].name, s->top_mobs[i].kills);
+		{
+			/* On garde exactement la même info, mais dans une ligne status */
+			print_status_linef("",
+							   "%2zu) %-28s %ld",
+					  i + 1, s->top_mobs[i].name, s->top_mobs[i].kills);
+		}
 	}
 	else
-		printf("(aucun)\n");
+		print_status_line("", "(aucun)");
 	
-	printf("============================================================\n\n");
+	printf("|===========================================================================|\n");
+	printf("\n");
 }
