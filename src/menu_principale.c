@@ -92,6 +92,7 @@ void print_status(void)
 	printf("|CSV hunt         : %s                                       |\n", tm_path_hunt_csv());
 	printf("|CSV globals      : %s                                       |\n", tm_path_globals_csv());
 	printf("|Armes config     : %s                                               |\n", tm_path_armes_ini());
+	printf("|markup config    : %s                                               |\n", tm_path_markup_ini());
 	print_hr();
 	
 	ini_ok = fs_file_exists(tm_path_armes_ini());
