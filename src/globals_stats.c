@@ -261,9 +261,9 @@ int	globals_stats_compute(const char *csv_path, long start_line, t_globals_stats
     
     fclose(f);
     
-    fill_top20(out->top_mobs, &out->top_mobs_count, mobs, mobs_len);
-    fill_top20(out->top_crafts, &out->top_crafts_count, crafts, crafts_len);
-    fill_top20(out->top_rares, &out->top_rares_count, rares, rares_len);
+    fill_top15(out->top_mobs, &out->top_mobs_count, mobs, mobs_len);
+    fill_top15(out->top_crafts, &out->top_crafts_count, crafts, crafts_len);
+    fill_top5(out->top_rares, &out->top_rares_count, rares, rares_len);
     
     kv_sum_free(mobs, mobs_len);
     kv_sum_free(crafts, crafts_len);
