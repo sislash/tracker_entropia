@@ -64,8 +64,8 @@ static void	menu_clear_csv_globals(void)
     char	confirm[8];
     FILE	*f;
     
-    printf("\nATTENTION : tu vas vider le fichier :\n%s\n", tm_path_globals_csv());
-    printf("Tape YES pour confirmer : ");
+    print_status_linef("\nATTENTION : tu vas vider le fichier :\n%s\n", tm_path_globals_csv());
+    print_menu_line("Tape YES pour confirmer : ");
     if (scanf("%7s", confirm) != 1)
     {
         ui_flush_stdin();
@@ -93,30 +93,29 @@ static void	menu_clear_csv_globals(void)
         csv_ensure_header6(f);
         fclose(f);
     }
-    printf("OK : CSV globals vide.\n");
+    print_menu_line("OK : CSV globals vide.");
 }
 
 static void	print_menu(void)
 {
-    printf("\n");
-    printf("============================================================\n");
-    printf("  MENU GLOBALS / GLOBAUX (MOB + CRAFT)\n");
-    printf("============================================================\n");
-    printf("Parser (lecture du chat.log)\n");
-    printf("  1) Demarrer LIVE   (temps reel)\n");
-    printf("  2) Demarrer REPLAY (relecture)\n");
-    printf("  3) Arreter le parser\n");
-    printf("\n");
-    printf("Dashboard\n");
-    printf("  4) Dashboard LIVE (auto-refresh)\n");
-    printf("\n");
-    printf("Fichiers\n");
-    printf("  5) Vider CSV globals (demande confirmation)\n");
-    printf("\n");
-    printf("  0) Retour\n");
-    printf("\n");
-    printf("Choix : ");
+
+    print_hrs();
+    print_menu_line("  MENU GLOBALS / GLOBAUX (MOB + CRAFT)");
+    print_hrs();
+    print_menu_line("Parser (lecture du chat.log)");
+    print_menu_line("  1) Demarrer LIVE   (temps reel)");
+    print_menu_line("  2) Demarrer REPLAY (relecture)");
+    print_menu_line("  3) Arreter le parser");
     print_hr();
+    print_menu_line("Dashboard");
+    print_menu_line("  4) Dashboard LIVE (auto-refresh)");
+    print_hrs();
+    print_menu_line("Fichiers");
+    print_menu_line("  5) Vider CSV globals (demande confirmation)");
+    print_hrs();
+    print_menu_line("  0) Retour");
+    print_hrs();
+    print_menu_line("Choix : ");
 }
 
 void	menu_globals(void)
