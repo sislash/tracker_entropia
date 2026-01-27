@@ -9,6 +9,8 @@ void ui_sleep_ms(unsigned ms);
 void ui_wait_enter(void);
 void ui_clear_screen(void);
 void ui_clear_viewport(void);
+void print_hr(void);
+void print_hrs(void);
 void print_status_line(const char *label, const char *value);
 void print_status_linef(const char *label, const char *fmt, ...);
 void ui_cursor_home(void);
