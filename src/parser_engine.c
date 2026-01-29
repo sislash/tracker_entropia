@@ -49,42 +49,38 @@ static int	process_line(FILE *out, const char *line)
 }
 
 int	parser_run_replay(const char *chatlog_path, const char *csv_path,
-					volatile int *stop_flag)
+					  volatile int *stop_flag)
 {
 	FILE	*in;
 	FILE	*out;
 	char	buf[2048];
-
+	
 	in = fs_fopen_shared_read(chatlog_path);
 	if (!in)
-	{
-		log_engine_error("open chatlog", chatlog_path);
-		return (-1);
-	}
-	
+		return (log_engine_error("open chatlog", chatlog_path), -1);
 	out = fopen(csv_path, "ab");
 	if (!out)
-	{
-		log_engine_error("open csv", csv_path);
-		fclose(in);
-		return (-1);
-	}
-#ifdef DEBUG
-	printf("[DEBUG] CSV opened: %s\n", csv_path);
+		return (log_engine_error("open csv", csv_path), fclose(in), -1);
+	
 	csv_ensure_header6(out);
 	fflush(out);
-#endif
+	#ifdef DEBUG
+	printf("[DEBUG] CSV opened: %s\n", csv_path);
+	#endif
 	
-	while (!stop_flag || *stop_flag == 0)
+	while (!stop_flag || (*stop_flag == 0))
 	{
-		if (!fgets(buf, sizeof(buf), in)){
+		if (!fgets(buf, sizeof(buf), in))
+		{
+			#ifdef DEBUG
 			printf("[DEBUG] REPLAY fgets EOF\n");
-			break;
+			#endif
+			break ;
 		}
-#ifdef DEBUG
+		#ifdef DEBUG
 		printf("[DEBUG] LINE: %s", buf);
+		#endif
 		process_line(out, buf);
-#endif
 	}
 	fclose(out);
 	fclose(in);
