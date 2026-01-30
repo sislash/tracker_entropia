@@ -8,6 +8,7 @@
 2026-01-20 14:14:29 [System] [] You inflicted 35.3 points of damage|||SHOT||||||1||||||
 2026-01-20 14:14:33 [System] [] Critical hit - Additional damage! You inflicted 114.1 points of damage|||SHOT||||||1||||||
 2026-01-20 14:14:00 [System] [] The target Dodged your attack|||SHOT||||||1||||||
+2026-01-20 14:14:00 [System] [] The target Evaded your attack|||SHOT||||||1||||||
 2026-01-20 14:14:00 [System] [] You missed|||SHOT||||||1||||||
 
 # Ne doit PAS compter comme shot (dégâts subis)
@@ -26,3 +27,6 @@
 
 # --- ignored channels ---
 2026-01-20 14:14:38 [Rookie] [Someone] bla bla|||-
+
+# Ne doit PAS compter comme shot (attaque évitée par le joueur)
+2026-01-20 14:14:00 [System] [] You Evaded the attack|||-
