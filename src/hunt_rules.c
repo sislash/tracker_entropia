@@ -304,8 +304,6 @@ int	hunt_parse_line(const char *line_in, t_hunt_event *ev)
 			"The target Evaded your attack",
 			"La cible a esquivé votre attaque",
 			"La cible a évité votre attaque",
-			"The attack missed",
-			"L'attaque a échoué",
 			"You missed",
 			"Vous avez raté",
 			"Vous manquez votre cible"
