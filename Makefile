@@ -12,7 +12,7 @@ BIN      := bin
 INCLUDES := -Iinclude
 
 CFLAGS_COMMON := -Wall -Wextra -Werror -Iinclude
-CFLAGS_C99    := -std=c99
+CFLAGS_C99    := -std=c11
 CFLAGS_LINUX  := -pthread
 CFLAGS_WIN    :=
 
