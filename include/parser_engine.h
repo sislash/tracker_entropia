@@ -7,6 +7,9 @@
 ** Ne contient AUCUNE UI.
 */
 
+void parser_engine_set_player_name(const char *name);
+
+
 int	parser_run_replay(const char *chatlog_path, const char *csv_path,
 					volatile int *stop_flag);
 
