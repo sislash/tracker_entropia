@@ -2,6 +2,8 @@
 #include "parser_engine.h"
 #include "core_paths.h"
 #include "chatlog_path.h"
+#include "config_arme.h"
+
 
 #include <stdio.h>
 #include <string.h>
@@ -68,6 +70,20 @@ static int	run_engine(void)
 	printf("[DEBUG] CSV path     : [%s]\n", tm_path_hunt_csv());
 	fflush(stdout);
 	#endif
+	
+	/* Charger le nom joueur depuis armes.ini et l'injecter au parser */
+	{
+		armes_db	db;
+		
+		memset(&db, 0, sizeof(db));
+		if (armes_db_load(&db, tm_path_armes_ini()))
+		{
+			if (db.player_name[0])
+				parser_engine_set_player_name(db.player_name);
+		}
+		armes_db_free(&db);
+	}
+	
 	
 	if (g_mode_live)
 		rc = parser_run_live(chatlog, tm_path_hunt_csv(), &g_stop);

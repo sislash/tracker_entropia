@@ -25,10 +25,6 @@
 #define LOOT_GROUP_WINDOW_SEC 5
 #define COMBAT_TO_LOOT_WINDOW_SEC 60
 
-/* prototypes internes au module */
-static int		is_global_or_hof(const char *line, const char *ts, t_hunt_event *ev);
-static double	parse_ped_value_from_line(const char *line);
-
 static void safe_copy(char *dst, size_t dstsz, const char *src)
 {
 	size_t n;
@@ -232,37 +228,6 @@ int	hunt_pending_pop(t_hunt_event *ev)
 }
 
 /* ========================================================================== */
-/* fonction helper                                                            */
-/* ========================================================================== */
-
-static double	parse_ped_value_from_line(const char *line)
-{
-	const char	*p;
-	const char	*q;
-	double		v;
-	
-	if (!line)
-		return (0.0);
-	
-	/* cherche le token " PED" */
-	p = strstr(line, " PED");
-	if (!p)
-		return (0.0);
-	
-	/* remonte au début du nombre juste avant " PED" */
-	q = p;
-	while (q > line)
-	{
-		unsigned char c = (unsigned char)q[-1];
-		if (!(isdigit(c) || c == '.' || c == ',' || c == '+' || c == '-'))
-			break;
-		q--;
-	}
-	v = strtod_comma_ok(q);
-	return (v);
-}
-
-/* ========================================================================== */
 /* Rendre le nom du joueur accessible au parser                               */
 /* ========================================================================== */
 
@@ -271,57 +236,6 @@ static char g_player_name[128];
 void hunt_rules_set_player_name(const char *name)
 {
 	safe_copy(g_player_name, sizeof(g_player_name), name);
-}
-
-/* ========================================================================== */
-/* détection GLOBAL / HOF                                                     */
-/* ========================================================================== */
-
-static int	is_global_or_hof(const char *line, const char *ts, t_hunt_event *ev)
-{
-	const char	*p;
-	double		ped;
-	char		pedbuf[64];
-	
-	if (!line || !ev)
-		return (0);
-	if (!g_player_name[0])
-		return (0);
-	
-	/* Cherche d'abord GLOBAL/HOF dans la ligne */
-	p = strstr(line, "GLOBAL:");
-	if (!p)
-		p = strstr(line, "HOF:");
-	if (!p)
-		return (0);
-	
-	/* Le nom du player doit apparaître APRES le token (évite des faux matchs) */
-	if (!strstr(p, g_player_name))
-		return (0);
-	
-	/* type */
-	if (strncmp(p, "GLOBAL:", 7) == 0)
-		safe_copy(ev->type, sizeof(ev->type), "GLOBAL");
-	else
-		safe_copy(ev->type, sizeof(ev->type), "HOF");
-	
-	/* timestamp (déjà calculé) */
-	if (ts && ts[0])
-		safe_copy(ev->ts, sizeof(ev->ts), ts);
-	
-	/* value PED */
-	ped = parse_ped_value_from_line(line);
-	snprintf(pedbuf, sizeof(pedbuf), "%.4f", ped);
-	safe_copy(ev->value, sizeof(ev->value), pedbuf);
-	
-	/* name: on met quelque chose de stable (tu pourras améliorer ensuite) */
-	safe_copy(ev->name, sizeof(ev->name), "SYSTEM");
-	
-	/* raw */
-	safe_copy(ev->raw, sizeof(ev->raw), line);
-	
-	/* pas de pending pour GLOBAL/HOF */
-	return (1);
 }
 
 /* ========================================================================== */
@@ -371,10 +285,6 @@ int	hunt_parse_line(const char *line_in, t_hunt_event *ev)
 	if (!extract_chatlog_timestamp(line, ts, sizeof(ts)))
 		now_timestamp(ts, sizeof(ts));
 	safe_copy(ev->ts, sizeof(ev->ts), ts);
-	
-	/* GLOBAL / HOF */
-	if (is_global_or_hof(line, ts, ev))
-		return 1;
 	
 	has_extra = 0;
 	
