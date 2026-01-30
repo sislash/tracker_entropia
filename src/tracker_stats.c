@@ -176,19 +176,33 @@ static void	load_weapon_model(t_hunt_stats *out)
 	armes_db			db;
 	char				selected[128];
 	const arme_stats	*w;
+	double				ammo_mu;
+	double				weapon_mu;
+	double				amp_mu;
+	double				base_tt;
 	
+	if (!out)
+		return ;
 	out->has_weapon = 0;
 	out->weapon_name[0] = '\0';
 	out->player_name[0] = '\0';
+	out->cost_shot = 0.0;
+	out->ammo_shot = 0.0;
+	out->decay_shot = 0.0;
+	out->amp_decay_shot = 0.0;
+	out->markup = 1.0;
+	
 	selected[0] = '\0';
 	if (weapon_selected_load(tm_path_weapon_selected(), selected,
 		sizeof(selected)) != 0)
 		return ;
 	if (!selected[0])
 		return ;
+	
 	memset(&db, 0, sizeof(db));
 	if (!armes_db_load(&db, tm_path_armes_ini()))
 		return ;
+	
 	w = armes_db_find(&db, selected);
 	if (w)
 	{
@@ -196,10 +210,43 @@ static void	load_weapon_model(t_hunt_stats *out)
 		snprintf(out->weapon_name, sizeof(out->weapon_name), "%s", w->name);
 		if (db.player_name[0])
 			snprintf(out->player_name, sizeof(out->player_name), "%s", db.player_name);
-		out->cost_shot = arme_cost_shot(w);
+		
+		/*
+		 * On remplit les champs détaillés attendus par tracker_view :
+		 * - Mode MU séparés (EU): on stocke les COUTS REELS (TT * MU).
+		 * - Mode legacy markup: ammo TT, decays TT*markup.
+		 *
+		 * out->markup :
+		 *   - legacy: w->markup
+		 *   - MU séparés: "markup effectif" = cost_shot / (TT total)
+		 *     (utile pour affichage sans changer la struct).
+		 */
+		if (w->weapon_mu > 0.0 || w->amp_mu > 0.0)
+		{
+			ammo_mu = (w->ammo_mu > 0.0) ? w->ammo_mu : 1.0;
+			weapon_mu = (w->weapon_mu > 0.0) ? w->weapon_mu : 1.0;
+			amp_mu = (w->amp_mu > 0.0) ? w->amp_mu : 1.0;
+			
+			out->ammo_shot = w->ammo_shot * ammo_mu;
+			out->decay_shot = w->decay_shot * weapon_mu;
+			out->amp_decay_shot = w->amp_decay_shot * amp_mu;
+			out->cost_shot = out->ammo_shot + out->decay_shot + out->amp_decay_shot;
+			
+			base_tt = (w->ammo_shot + w->decay_shot + w->amp_decay_shot);
+			out->markup = (base_tt > 0.0) ? (out->cost_shot / base_tt) : 1.0;
+		}
+		else
+		{
+			out->markup = (w->markup > 0.0) ? w->markup : 1.0;
+			out->ammo_shot = w->ammo_shot;
+			out->decay_shot = w->decay_shot * out->markup;
+			out->amp_decay_shot = w->amp_decay_shot * out->markup;
+			out->cost_shot = out->ammo_shot + out->decay_shot + out->amp_decay_shot;
+		}
 	}
 	armes_db_free(&db);
 }
+
 
 /* ------------------------------ markup helpers ---------------------------- */
 
