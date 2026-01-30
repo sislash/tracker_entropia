@@ -11,6 +11,8 @@
 #include "menu_principale.h"   /* print_status() */
 #include "sweat_option.h"
 #include "session_export.h"
+#include "ui_key.h"   /* ou le header exact de ton module clavier */
+
 
 #include <stdio.h>
 #include <string.h>
@@ -169,14 +171,26 @@ static void	menu_toggle_sweat(void)
 void	menu_dashboard(void)
 {
 	long			offset;
-	t_hunt_stats		s;
+	t_hunt_stats	s;
+	int				key;
 	
 	printf("\nDASHBOARD LIVE\n");
-	printf("Appuie sur 'q' pour quitter.\n");
+	printf("Touches: 1-4 pages, A/D changer page, Q pour quitter.\n");
 	ui_sleep_ms(250);
 	
-	while (!ui_user_wants_quit())
+	while (1)
 	{
+		/* -------- clavier non-bloquant -------- */
+		key = -1;
+		if (ui_key_available())
+			key = ui_key_getch();
+		
+		if (key == 'q' || key == 'Q')
+			break;
+		if (key > 0)
+			tracker_view_handle_key(key);
+		
+		/* -------- stats + affichage -------- */
 		offset = session_load_offset(tm_path_session_offset());
 		if (tracker_stats_compute(tm_path_hunt_csv(), offset, &s) == 0)
 		{
@@ -186,17 +200,25 @@ void	menu_dashboard(void)
 				   parser_thread_is_running() ? "EN COURS (RUNNING)" : "ARRETE (STOPPED)");
 			printf("Offset session : %ld ligne(s)\n", offset);
 			printf("CSV            : %s\n\n", tm_path_hunt_csv());
+			
+			/* La view gère désormais les pages */
 			tracker_view_print(&s);
-			printf("\n(press 'q' to quit)\n");
+			
+			printf("\n(1-4 pages, A/D changer, Q quitter)\n");
 		}
 		else
 		{
 			ui_clear_viewport();
 			printf("Aucun CSV trouve : %s\n", tm_path_hunt_csv());
 			printf("-> Lance le parser LIVE/REPLAY pour generer des donnees.\n");
-			printf("\n(press 'q' to quit)\n");
+			printf("\n(Q pour quitter)\n");
 		}
-		ui_sleep_ms(800);
+		
+		/*
+		 * 800ms = trop lent pour le changement de page.
+		 * 150-200ms donne une UX fluide sans surcharger.
+		 */
+		ui_sleep_ms(150);
 	}
 }
 
