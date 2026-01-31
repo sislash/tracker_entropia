@@ -1,52 +1,166 @@
-====================================================================
+license_bilingual = """=====================================================================
 LICENCE PROPRIÉTAIRE / PROPRIETARY LICENSE
-====================================================================
+TRACKER MODULAIRE — ENTROPIA UNIVERSE
+=====================================================================
 
 Copyright (c) 2026
-Tous droits réservés.
+Megnoux Xavier
+Tous droits réservés / All rights reserved.
 
---------------------------------------------------------------------
+Date d'entrée en vigueur / Effective date: 2026-01-31
+
+=====================================================================
 FRANÇAIS
---------------------------------------------------------------------
+=====================================================================
 
-Ce logiciel, ainsi que l'ensemble de son code source, fichiers de
-configuration, exécutables, scripts, documents et ressources associées,
-est la propriété exclusive de l'auteur.
+1) Définitions
+- « Logiciel » : le projet "Tracker Modulaire", incluant notamment le code
+  source, les exécutables, bibliothèques, scripts, fichiers de
+  configuration, documentation et ressources associées.
+- « Auteur » : le titulaire des droits sur le Logiciel.
+- « Vous » / « Utilisateur » : toute personne physique ou morale qui
+  accède au Logiciel.
 
-Toute utilisation, reproduction, modification, adaptation, traduction,
-distribution, diffusion, publication, vente, sous-licence ou exploitation,
-totale ou partielle, sous quelque forme que ce soit, est STRICTEMENT
-INTERDITE sans l'autorisation écrite préalable de l'auteur.
+2) Octroi de licence (usage limité)
+Sous réserve du respect de la présente licence, l’Auteur vous accorde une
+licence :
+- non exclusive,
+- non transférable,
+- non sous-licenciable,
+- révocable,
 
-Toute violation de ces droits pourra entraîner des poursuites civiles
-et/ou pénales conformément aux lois en vigueur.
+vous autorisant uniquement à :
+a) utiliser et exécuter le Logiciel à des fins PERSONNELLES et NON
+   COMMERCIALES ;
+b) conserver une (1) copie du Logiciel à des fins de sauvegarde
+   personnelle.
 
-CE LOGICIEL EST FOURNI « TEL QUEL », SANS AUCUNE GARANTIE, EXPRESSE OU
-IMPLICITE, Y COMPRIS, MAIS SANS S'Y LIMITER, LES GARANTIES DE QUALITÉ
-MARCHANDE, D'ADÉQUATION À UN USAGE PARTICULIER ET D'ABSENCE DE CONTREFAÇON.
-L'AUTEUR NE POURRA EN AUCUN CAS ÊTRE TENU RESPONSABLE DES DOMMAGES DIRECTS
-OU INDIRECTS RÉSULTANT DE L'UTILISATION DU LOGICIEL.
+Tout droit non expressément accordé est réservé à l’Auteur.
 
---------------------------------------------------------------------
+3) Interdictions
+Sauf autorisation écrite préalable de l’Auteur, il est strictement
+interdit de :
+a) copier, publier, distribuer, redistribuer, ou mettre à disposition le
+   Logiciel (en tout ou partie), y compris via dépôt public (GitHub,
+   GitLab, etc.), site web, marketplace, ou partage de fichiers ;
+b) vendre, louer, sous-licencier, ou exploiter commercialement le Logiciel
+   (directement ou indirectement), ou fournir un service à des tiers à
+   partir du Logiciel ;
+c) modifier, adapter, traduire, décompiler, désassembler, pratiquer de
+   l’ingénierie inverse, ou créer des œuvres dérivées du Logiciel, lorsque
+   ces modifications/œuvres sont destinées à être diffusées (même
+   gratuitement) ;
+d) supprimer ou altérer toute mention de copyright, d’auteur, ou de
+   licence.
+
+4) Contributions (si applicable)
+Si vous transmettez volontairement à l’Auteur des correctifs, idées,
+améliorations ou contributions (« Contributions »), vous acceptez que
+l’Auteur puisse les utiliser, intégrer et exploiter dans le Logiciel
+sans obligation de rémunération ni d’attribution, sauf accord écrit
+contraire.
+
+5) Résiliation
+La licence prend fin automatiquement en cas de violation de la présente
+licence.
+En cas de résiliation, vous devez :
+- cesser immédiatement toute utilisation du Logiciel ;
+- supprimer toutes les copies du Logiciel en votre possession ou sous
+  votre contrôle.
+
+6) Absence de garantie
+LE LOGICIEL EST FOURNI « TEL QUEL » (« AS IS »), SANS AUCUNE GARANTIE,
+EXPRESSE OU IMPLICITE, Y COMPRIS (SANS S’Y LIMITER) LES GARANTIES DE
+QUALITÉ MARCHANDE, D’ADÉQUATION À UN USAGE PARTICULIER ET
+D’ABSENCE DE CONTREFAÇON.
+Vous assumez l’intégralité des risques liés à l’utilisation du Logiciel.
+
+7) Limitation de responsabilité
+DANS LES LIMITES AUTORISÉES PAR LA LOI APPLICABLE, L’AUTEUR NE POURRA EN
+AUCUN CAS ÊTRE TENU RESPONSABLE DES DOMMAGES DIRECTS OU INDIRECTS,
+SPÉCIAUX, ACCESSOIRES OU CONSÉCUTIFS (NOTAMMENT PERTE DE DONNÉES, PERTE
+DE PROFITS, INTERRUPTION D’ACTIVITÉ), RÉSULTANT DE L’UTILISATION OU DE
+L’IMPOSSIBILITÉ D’UTILISER LE LOGICIEL, MÊME SI L’AUTEUR A ÉTÉ AVERTI DE
+LA POSSIBILITÉ DE TELS DOMMAGES.
+
+8) Divers
+- Si une disposition est jugée invalide ou inapplicable, les autres
+  dispositions demeurent en vigueur.
+- Les titres de section sont fournis pour la commodité et n’affectent pas
+  l’interprétation.
+
+=====================================================================
 ENGLISH
---------------------------------------------------------------------
+=====================================================================
 
-This software, including all its source code, configuration files,
-executables, scripts, documentation, and related resources, is the
-exclusive property of the author.
+1) Definitions
+- “Software”: the "Tracker Modulaire" project, including (without
+  limitation) source code, executables, libraries, scripts, configuration
+  files, documentation, and related resources.
+- “Author”: the copyright holder of the Software.
+- “You” / “User”: any individual or legal entity accessing the Software.
 
-Any use, reproduction, modification, adaptation, translation,
-distribution, redistribution, publication, sale, sublicensing, or
-exploitation, in whole or in part, in any form whatsoever, is STRICTLY
-PROHIBITED without prior written permission from the author.
+2) License grant (limited use)
+Subject to compliance with this license, the Author grants You a license
+that is:
+- non-exclusive,
+- non-transferable,
+- non-sublicensable,
+- revocable,
 
-Any violation of these terms may result in civil and/or criminal
-prosecution under applicable laws.
+authorizing You only to:
+a) use and run the Software for PERSONAL and NON-COMMERCIAL purposes;
+b) keep one (1) copy of the Software for personal backup purposes.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-====================================================================
+All rights not expressly granted are reserved by the Author.
+
+3) Restrictions
+Unless You have prior written permission from the Author, You are
+strictly prohibited from:
+a) copying, publishing, distributing, redistributing, or making the
+   Software available (in whole or in part), including via public
+   repositories (GitHub, GitLab, etc.), websites, marketplaces, or file
+   sharing;
+b) selling, renting, sublicensing, or commercially exploiting the
+   Software (directly or indirectly), or providing services to third
+   parties using the Software;
+c) modifying, adapting, translating, decompiling, disassembling, reverse
+   engineering, or creating derivative works of the Software, where such
+   modifications/works are intended for distribution (even for free);
+d) removing or altering any copyright, author, or license notices.
+
+4) Contributions (if any)
+If You voluntarily submit fixes, ideas, improvements or contributions
+(“Contributions”) to the Author, You agree the Author may use, integrate,
+and exploit them in the Software without compensation or attribution,
+unless otherwise agreed in writing.
+
+5) Termination
+This license terminates automatically upon any breach.
+Upon termination, You must:
+- immediately stop using the Software;
+- delete all copies of the Software under Your possession or control.
+
+6) Disclaimer of warranty
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+You assume all risks associated with the use of the Software.
+
+7) Limitation of liability
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL OR
+CONSEQUENTIAL DAMAGES (INCLUDING DATA LOSS, LOSS OF PROFITS, OR BUSINESS
+INTERRUPTION) ARISING FROM THE USE OF OR INABILITY TO USE THE SOFTWARE,
+EVEN IF THE AUTHOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+8) Miscellaneous
+- If any provision is held invalid or unenforceable, the remaining
+  provisions remain in full force.
+- Section headings are for convenience only and do not affect
+  interpretation.
+
+=====================================================================
+END OF LICENSE
+=====================================================================
+"""
