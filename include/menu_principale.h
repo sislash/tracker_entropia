@@ -20,6 +20,12 @@ typedef struct s_menu
     const char	**items;
     int			count;
     int			selected;
+
+	/* Last render position/metrics (used for mouse click selection) */
+	int			render_x;
+	int			render_y;
+	int			item_w;
+	int			item_h;
 }	t_menu;
 
 void	menu_init(t_menu *m, const char **items, int count);

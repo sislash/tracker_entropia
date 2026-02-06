@@ -30,6 +30,11 @@ typedef struct s_window
 	int			key_s;
 	int			key_d;
 
+	/* Mouse (frame-based): position + click pulse */
+	int			mouse_x;
+	int			mouse_y;
+	int			mouse_left_click;
+
     int				use_buffer;
     
     void			*backend_1;
