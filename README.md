@@ -1,5 +1,6 @@
-# Tracker Modulaire — Entropia Universe
-Programme console **modulaire** en **C pur (C99)** pour **Entropia Universe**.  
+# Tracker Modulaire — Entropia Universe (WL / Fenêtre)
+
+Programme **modulaire** en **C pur (C99)** pour **Entropia Universe**, version **UI en fenêtre** (Linux **X11**, Windows **Win32**).  
 Il analyse le fichier `chat.log` du jeu afin de suivre une activité de chasse en **temps réel (LIVE)** ou en **relecture (REPLAY)**, en enregistrant les évènements dans des **CSV persistants** et en calculant des **statistiques de session** (loot, dépenses, net, return, tops, etc.).
 
 Objectifs : code **portable Linux / Windows**, **robuste** face aux variations de logs, et facilement **extensible** (nouveaux trackers / nouvelles règles).
@@ -41,7 +42,7 @@ Objectifs : code **portable Linux / Windows**, **robuste** face aux variations d
     - ou **estimées** via le coût/tir de l’arme active (`armes.ini`)
   - net / return
   - top mobs (kills)
-- Interface console interactive (dashboard / pages)
+- Interface **fenêtre** (dashboard / pages / menus)
 
 ### Tracker GLOBALS (mobs + craft)
 - Parsing séparé + CSV séparé
@@ -56,55 +57,72 @@ Objectifs : code **portable Linux / Windows**, **robuste** face aux variations d
 ---
 
 ## Compatibilité
-- **Linux** : GCC + Make
+- **Linux** : GCC + Make + **X11**
 - **Windows** :
-  - exécutable `.exe` utilisable si fourni dans `bin/`
-  - ou compilation via **MinGW-w64**
+  - compilation via **MinGW-w64** (cross ou natif)
+  - exécutable `.exe` généré dans `bin/`
 
-Standard : **C99**  
-Linux : threads via `-pthread`
+Standard : **C99**
+
+> Linux : nécessite le link avec X11 (`-lX11`) + math (`-lm`).
 
 ---
 
 ## Arborescence
 
-    tracker_modulaire/
+Version WL (fenêtre) :
+
+    tracker_modulaire_fenetre_WL_V2/
+    ├── build/                  # Objets (.o)
+    │   └── win/                # Objets Windows (.o) si compilation win
     ├── bin/                    # Exécutables Linux & Windows
-    ├── build/
-    │   ├── src/                # Objets Linux (.o)
-    │   └── win/                # Objets Windows (.o)
     ├── include/                # Headers (.h)
-    ├── logs/                   # Fichiers runtime (créé automatiquement)
     ├── src/                    # Sources (.c)
-    ├── tests/                  # Cas de tests
     ├── armes.ini               # Config armes
     ├── markup.ini              # Config MU loot (optionnel)
     ├── Makefile
-    ├── README.md
     └── LICENSE
+
+Dossiers runtime (créés automatiquement) :
+
+    logs/                       # CSV + fichiers persistants
 
 ---
 
 ## Compilation
 
 ### Linux
-Prérequis : `gcc`, `make`
+Prérequis : `gcc`, `make`, **X11 dev**
+
+Exemples selon distro :
+- Debian/Ubuntu : `sudo apt install build-essential libx11-dev`
+- Fedora : `sudo dnf install gcc make libX11-devel`
+- Arch : `sudo pacman -S gcc make libx11`
+
+Build + run :
 
     make
-    ./bin/tracker_modulaire
+    ./bin/app_fenetre
+
+Raccourci :
+
+    make run
 
 ### Windows
-Option A (recommandé) : utiliser `bin/tracker_modulaire.exe`  
+Compilation via MinGW-w64 (cross-compile le plus courant) :
+
+    make win
+
+Sortie :
+
+    bin/app_fenetre.exe
+
 Important : lancer depuis la **racine** du projet (chemins relatifs vers `armes.ini`, `markup.ini`, `logs/`).
 
 PowerShell :
 
-    cd path\to\tracker_modulaire
-    .\bin\tracker_modulaire.exe
-
-Option B : compiler via MinGW-w64 (depuis Linux ou Windows selon ton setup) :
-
-    make win
+    cd path\to\tracker_modulaire_fenetre_WL_V2
+    .\bin\app_fenetre.exe
 
 ---
 
@@ -150,12 +168,12 @@ Pour une configuration **robuste**, tu peux forcer le chemin via variable d’en
 Linux / Wine :
 
     export ENTROPIA_CHATLOG="/chemin/vers/chat.log"
-    ./bin/tracker_modulaire
+    ./bin/app_fenetre
 
 Windows (PowerShell) :
 
     $env:ENTROPIA_CHATLOG="C:\...\Entropia Universe\chat.log"
-    .\bin\tracker_modulaire.exe
+    .\bin\app_fenetre.exe
 
 ---
 
@@ -279,13 +297,13 @@ Champs :
 
 ## Tests
 
-Tests unitaires des règles de parsing :
+Le README historique contient une section tests.  
+⚠️ **Dans cette version WL (fenêtre), il n’y a pas de dossier `tests/` ni de cible `make test` par défaut.**
 
-    make test
-
-Cas de tests :
-
-    tests/hunt_rules_cases.txt
+Si tu veux réactiver des tests unitaires des règles de parsing :
+- ajoute un dossier `tests/`
+- ajoute une cible `test` dans le Makefile (ou un runner minimal)
+- garde un fichier de cas (ex: `tests/hunt_rules_cases.txt`)
 
 Objectif : garantir que l’ajout de nouvelles règles ne casse pas les patterns existants.
 
@@ -300,6 +318,13 @@ Objectif : garantir que l’ajout de nouvelles règles ne casse pas les patterns
 ### Dépenses à 0
 - aucune dépense n’est logguée dans le chat, et aucune arme active n’est sélectionnée
 - ou l’arme active n’existe pas (nom de section exact) dans `armes.ini`
+
+### Linux : erreur `X11/Xlib.h` introuvable ou link `-lX11`
+- installe les dépendances X11 dev (ex: `libx11-dev` / `libX11-devel`)
+- puis :
+
+    make clean
+    make
 
 ### Windows : l’exe ne marche pas si lancé depuis bin/
 - lance depuis la racine du projet
@@ -321,7 +346,7 @@ Principe :
             ↓
     [ stats ]           → calculs purs
             ↓
-    [ view / menus ]    → dashboard console
+    [ view / menus ]    → UI fenêtre (Linux X11 / Windows Win32)
 
 Philosophie :
 - 1 module = 1 responsabilité
