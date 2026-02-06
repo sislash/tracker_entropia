@@ -85,7 +85,9 @@ int	window_init(t_window *w, const char *title, int width, int height)
                                  (unsigned int)width, (unsigned int)height, 1,
                                  BlackPixel(b->d, b->screen), WhitePixel(b->d, b->screen));
     XStoreName(b->d, b->win, title ? title : "window");
-    XSelectInput(b->d, b->win, ExposureMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask);
+    XSelectInput(b->d, b->win, ExposureMask | KeyPressMask | KeyReleaseMask
+        | ButtonPressMask | ButtonReleaseMask | PointerMotionMask
+        | StructureNotifyMask);
     b->wm_delete = XInternAtom(b->d, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(b->d, b->win, &b->wm_delete, 1);
     XMapWindow(b->d, b->win);
@@ -117,6 +119,10 @@ int	window_init(t_window *w, const char *title, int width, int height)
     w->key_q = 0;
     w->key_s = 0;
     w->key_d = 0;
+
+    w->mouse_x = 0;
+    w->mouse_y = 0;
+    w->mouse_left_click = 0;
     w->use_buffer = 1;
     
     w->backend_1 = (void *)b;
@@ -139,6 +145,7 @@ void	window_poll_events(t_window *w)
     w->key_down = 0;
     w->key_enter = 0;
     w->key_escape = 0;
+    w->mouse_left_click = 0;
     b = (t_x11_backend *)w->backend_1;
     if (!b || !b->d)
         return ;
@@ -183,6 +190,18 @@ void	window_poll_events(t_window *w)
                 w->key_s = 0;
             else if (ks == XK_d || ks == XK_D)
                 w->key_d = 0;
+        }
+        else if (ev.type == MotionNotify)
+        {
+            w->mouse_x = ev.xmotion.x;
+            w->mouse_y = ev.xmotion.y;
+        }
+        else if (ev.type == ButtonPress)
+        {
+            w->mouse_x = ev.xbutton.x;
+            w->mouse_y = ev.xbutton.y;
+            if (ev.xbutton.button == Button1)
+                w->mouse_left_click = 1;
         }
     }
 }

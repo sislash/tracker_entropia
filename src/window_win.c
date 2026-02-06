@@ -13,9 +13,17 @@
 #ifdef _WIN32
 
 # include "window.h"
+
 # include <windows.h>
 # include <stdlib.h>
 # include <string.h>
+
+#ifndef GET_X_LPARAM
+# define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#endif
+#ifndef GET_Y_LPARAM
+# define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+#endif
 
 typedef struct s_win_backend
 {
@@ -97,8 +105,7 @@ static void	ft_unset_key(t_window *w, WPARAM key)
         w->key_d = 0;
 }
 
-static LRESULT CALLBACK	ft_wndproc(HWND hwnd, UINT msg,
-                                   WPARAM wparam, LPARAM lparam)
+static LRESULT CALLBACK	ft_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     t_window	*w;
     
@@ -113,6 +120,19 @@ static LRESULT CALLBACK	ft_wndproc(HWND hwnd, UINT msg,
         return (ft_set_key(w, wparam), 0);
     if (msg == WM_KEYUP && w)
         return (ft_unset_key(w, wparam), 0);
+    if (msg == WM_MOUSEMOVE && w)
+    {
+        w->mouse_x = GET_X_LPARAM(lparam);
+        w->mouse_y = GET_Y_LPARAM(lparam);
+        return (0);
+    }
+    if (msg == WM_LBUTTONDOWN && w)
+    {
+        w->mouse_x = GET_X_LPARAM(lparam);
+        w->mouse_y = GET_Y_LPARAM(lparam);
+        w->mouse_left_click = 1;
+        return (0);
+    }
     if (msg == WM_ERASEBKGND)
         return (1);
     if (msg == WM_CLOSE)
@@ -121,6 +141,7 @@ static LRESULT CALLBACK	ft_wndproc(HWND hwnd, UINT msg,
         return (PostQuitMessage(0), 0);
     return (DefWindowProc(hwnd, msg, wparam, lparam));
 }
+
 
 static int	ft_register_class(t_win_backend *b)
 {
@@ -224,6 +245,13 @@ int	window_init(t_window *w, const char *title, int width, int height)
     w->key_q = 0;
     w->key_s = 0;
     w->key_d = 0;
+
+	w->mouse_x = 0;
+	w->mouse_y = 0;
+	w->mouse_left_click = 0;
+	    w->mouse_x = 0;
+	    w->mouse_y = 0;
+	    w->mouse_left_click = 0;
     w->use_buffer = 1;
     
     w->backend_1 = (void *)b;
@@ -244,6 +272,8 @@ void	window_poll_events(t_window *w)
     w->key_down = 0;
     w->key_enter = 0;
     w->key_escape = 0;
+	w->mouse_left_click = 0;
+	w->mouse_left_click = 0;
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         if (msg.message == WM_QUIT)
