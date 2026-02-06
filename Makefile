@@ -3,7 +3,7 @@
 CC       := gcc
 CC_WIN   := x86_64-w64-mingw32-gcc
 
-NAME     := app_fenetre
+NAME     := tracker_loot
 NAME_WIN := $(NAME).exe
 
 BUILD    := build
