@@ -4,13 +4,23 @@
 # include <stddef.h>
 
 # define TM_TOP_MOBS 10
-#define TM_STATS_HAS_MARKUP 1
+# define TM_TOP_LOOT 10
+# define TM_STATS_HAS_MARKUP 1
 
 typedef struct s_top_mob
 {
 	char	name[128];
 	long	kills;
 } 			t_top_mob;
+
+typedef struct s_top_loot
+{
+	char	name[128];
+	double	tt_ped;
+	double	mu_ped;
+	double	total_mu_ped;
+	long	events;
+} 			t_top_loot;
 
 typedef struct s_hunt_stats
 {
@@ -47,6 +57,12 @@ typedef struct s_hunt_stats
 	size_t		mobs_unique;
 	size_t		top_mobs_count;
 	t_top_mob	top_mobs[TM_TOP_MOBS];
+
+	/* ====================================================== */
+	/* TOP LOOT (per item)                                    */
+	/* ====================================================== */
+	size_t		top_loot_count;
+	t_top_loot	top_loot[TM_TOP_LOOT];
 	
 	/* ====================================================== */
 	/* MARKUP (TT / MU / TT+MU)                               */
