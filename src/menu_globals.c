@@ -244,12 +244,20 @@ static void	screen_dashboard_globals_live(t_window *w)
     int				i;
     size_t			k;
     double			mx;
+	t_menu			back;
+	const char		*back_items[1];
+	int				action;
     
-    while (w->running)
+	back_items[0] = "Retour menu";
+	menu_init(&back, back_items, 1);
+	while (w->running)
     {
         window_poll_events(w);
         if (w->key_escape)
             break ;
+		action = menu_update(&back, w);
+		if (action == 0)
+			break ;
         
         memset(&s, 0, sizeof(s));
         (void)globals_stats_compute(tm_path_globals_csv(), 0, &s);
@@ -329,7 +337,7 @@ static void	screen_dashboard_globals_live(t_window *w)
             buf[n++][0] = '\0';
         }
         
-        snprintf(buf[n++], sizeof(buf[0]), "(Auto-refresh ~250ms | Echap pour quitter)");
+        snprintf(buf[n++], sizeof(buf[0]), "(Auto-refresh ~250ms | Bouton 'Retour menu' ou Echap)");
         
         i = 0;
         while (i < n)
@@ -339,6 +347,13 @@ static void	screen_dashboard_globals_live(t_window *w)
         }
         window_clear(w, 0xFFFFFF);
         w_draw_lines(w, 30, 30, lines, n);
+		/* Keep the back button visible on any screen size */
+		{
+			int back_y = w->height - 60;
+			if (back_y < 0)
+				back_y = 0;
+			menu_render(&back, w, 30, back_y);
+		}
         window_present(w);
         ft_sleep_ms(250);
     }

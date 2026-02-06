@@ -64,6 +64,12 @@ int	main(void)
 	/* Loop tant que la fenêtre est ouverte */
 	while (w.running)
 	{
+		/* Petit bouton retour réutilisable sur les écrans "Echap" */
+		const char	*back_items[1] = { "Retour menu" };
+		t_menu		back_menu;
+		int			back_action;
+		int			back_y;
+		menu_init(&back_menu, back_items, 1);
 		/* Début de frame + calcul dt (en secondes) */
 		frame_start = ft_time_ms();
 		now_ms = frame_start;
@@ -113,23 +119,46 @@ int	main(void)
 		/* Écran 3 : placeholder options/stop */
 		else if (screen == 3)
 		{
-			if (w.key_escape)
+			/*
+			** Mouse hit-testing in menu_update() relies on m->render_x/y.
+			** back_menu is re-initialized every frame, so we must pre-set
+			** its render position *before* calling menu_update(), otherwise
+			** mouse clicks never register (back button looks clickable but isn't).
+			*/
+			back_y = w.height - 60;
+			if (back_y < 0)
+				back_y = 0;
+			back_menu.render_x = 60;
+			back_menu.render_y = back_y;
+			back_menu.item_w = 600;
+			back_menu.item_h = 36;
+			back_action = menu_update(&back_menu, &w);
+			if (w.key_escape || back_action == 0)
 				screen = 0;
-			window_clear(&w, 0xFFFFFF);
-			window_draw_text(&w, 60, 70,
-							 "OK : tous les parsers sont arretes.", 0x000000);
-			
+
 			stop_all_parsers(&w, 60, 70);
+			/* Keep the back button visible on any screen size */
+			menu_render(&back_menu, &w, 60, back_y);
 			window_present(&w);
 		}
 		else if (screen == 4)
 		{
-			if (w.key_escape)
+			back_y = w.height - 60;
+			if (back_y < 0)
+				back_y = 0;
+			back_menu.render_x = 40;
+			back_menu.render_y = back_y;
+			back_menu.item_w = 600;
+			back_menu.item_h = 36;
+			back_action = menu_update(&back_menu, &w);
+			if (w.key_escape || back_action == 0)
 				screen = 0;
 			
 			window_clear(&w, 0xFFFFFF);
 			window_draw_text(&w, 40, 80,
 							 "Options (placeholder) - Echap pour revenir", 0x000000);
+			/* Keep the back button visible on any screen size */
+			menu_render(&back_menu, &w, 40, back_y);
 			window_present(&w);
 		}
 		

@@ -30,6 +30,14 @@ typedef struct s_kv
 	long	count;
 }	t_kv;
 
+typedef struct s_kv_loot
+{
+	char	*key;
+	long	events;
+	double	tt_sum;
+	double	final_sum;
+}	t_kv_loot;
+
 
 typedef struct s_csv_fields
 {
@@ -58,6 +66,67 @@ static char	*xstrdup(const char *s)
 		return (NULL);
 	memcpy(p, s, len);
 	return (p);
+}
+
+static const char	*kv_key_safe(const char *key)
+{
+	if (!key || !key[0])
+		return ("(unknown)");
+	return (key);
+}
+
+static void	kv_loot_push(t_kv_loot **arr, size_t *len,
+						const char *key, double tt, double final)
+{
+	t_kv_loot	*tmp;
+
+	tmp = (t_kv_loot *)realloc(*arr, (*len + 1) * sizeof(**arr));
+	if (!tmp)
+		return ;
+	*arr = tmp;
+	(*arr)[*len].key = xstrdup(key);
+	(*arr)[*len].events = 1;
+	(*arr)[*len].tt_sum = tt;
+	(*arr)[*len].final_sum = final;
+	(*len)++;
+}
+
+static void	kv_loot_add(t_kv_loot **arr, size_t *len,
+						const char *key, double tt, double final)
+{
+	size_t	i;
+
+	key = kv_key_safe(key);
+	i = 0;
+	while (i < *len)
+	{
+		if ((*arr)[i].key && strcmp((*arr)[i].key, key) == 0)
+		{
+			(*arr)[i].events++;
+			(*arr)[i].tt_sum += tt;
+			(*arr)[i].final_sum += final;
+			return ;
+		}
+		i++;
+	}
+	kv_loot_push(arr, len, key, tt, final);
+}
+
+static void	kv_loot_free(t_kv_loot **arr, size_t *len)
+{
+	size_t	i;
+
+	if (!arr || !*arr)
+		return ;
+	i = 0;
+	while (i < *len)
+	{
+		free((*arr)[i].key);
+		i++;
+	}
+	free(*arr);
+	*arr = NULL;
+	*len = 0;
 }
 
 static int	str_icontains(const char *hay, const char *needle)
@@ -376,10 +445,12 @@ static void	stats_on_shot(t_hunt_stats *out, const char *qty_s)
 	out->shots += q;
 }
 
-static void	stats_on_sweat(t_hunt_stats *out, const char *qty_s)
+static void	stats_on_sweat(t_hunt_stats *out, const t_markup_db *mu,
+					t_kv_loot **loot, size_t *loot_len, const char *qty_s)
 {
 	long	q;
 	double	v;
+	double	final;
 	
 	q = 0;
 	if (qty_s && qty_s[0])
@@ -391,6 +462,10 @@ static void	stats_on_sweat(t_hunt_stats *out, const char *qty_s)
 	v = (double)q * (double)EU_SWEAT_PED_PER_BOTTLE;
 	out->loot_ped += v;
 	out->loot_events++;
+	/* Treat sweat as a loot item for MU estimation */
+	final = apply_markup_value(mu, "Vibrant Sweat", v);
+	maybe_add_markup_fields(out, v, final);
+	kv_loot_add(loot, loot_len, "Vibrant Sweat", v, final);
 }
 
 static int	is_loot_type(const char *type)
@@ -435,7 +510,8 @@ static int	get_value(double *v, const char *val_s, const char *raw)
 }
 
 static void	stats_add_loot(t_hunt_stats *out, const t_markup_db *mu,
-						   const char *type, const char *name, double v)
+						t_kv_loot **loot, size_t *loot_len,
+						const char *type, const char *name, double v)
 {
 	double	final;
 	
@@ -445,6 +521,7 @@ static void	stats_add_loot(t_hunt_stats *out, const t_markup_db *mu,
 	{
 		final = apply_markup_value(mu, name, v);
 		maybe_add_markup_fields(out, v, final);
+		kv_loot_add(loot, loot_len, name, v, final);
 	}
 }
 
@@ -455,6 +532,7 @@ static void	stats_add_expense(t_hunt_stats *out, double v)
 }
 
 static void	stats_on_value(t_hunt_stats *out, const t_markup_db *mu,
+					 t_kv_loot **loot, size_t *loot_len,
 						   const char *type, const char *name,
 						   const char *val_s, const char *raw)
 {
@@ -465,7 +543,7 @@ static void	stats_on_value(t_hunt_stats *out, const t_markup_db *mu,
 	has_value = get_value(&v, val_s, raw);
 	expense = is_expense_type(type);
 	if (has_value && (is_loot_type(type) || (!expense && v > 0.0)))
-		stats_add_loot(out, mu, type, name, v);
+		stats_add_loot(out, mu, loot, loot_len, type, name, v);
 	else if (has_value && expense)
 		stats_add_expense(out, v);
 }
@@ -495,6 +573,7 @@ static void	csv_parse_fields(t_csv_fields *f, char *line)
 
 
 static void	process_fields(t_hunt_stats *out, const t_markup_db *mu,
+				   t_kv_loot **loot, size_t *loot_len,
 				   t_kv **mobs, size_t *mobs_len, const t_csv_fields *f,
 				   int sweat_enabled)
 {
@@ -512,10 +591,10 @@ static void	process_fields(t_hunt_stats *out, const t_markup_db *mu,
 	}
 	if (strcmp(f->type, "SWEAT") == 0)
 	{
-		stats_on_sweat(out, f->qty_s);
+		stats_on_sweat(out, mu, loot, loot_len, f->qty_s);
 		return ;
 	}
-	stats_on_value(out, mu, f->type, f->name, f->val_s, f->raw);
+	stats_on_value(out, mu, loot, loot_len, f->type, f->name, f->val_s, f->raw);
 }
 
 
@@ -538,6 +617,45 @@ static void	finalize_top_mobs(t_hunt_stats *out, t_kv *mobs, size_t mobs_len)
 			snprintf(out->top_mobs[i].name,
 					 sizeof(out->top_mobs[i].name), "%s", mobs[i].key);
 		out->top_mobs[i].kills = mobs[i].count;
+		i++;
+	}
+}
+
+static int	kv_loot_cmp_desc_total(const void *a, const void *b)
+{
+	const t_kv_loot	*ka;
+	const t_kv_loot	*kb;
+
+	ka = (const t_kv_loot *)a;
+	kb = (const t_kv_loot *)b;
+	if (ka->final_sum < kb->final_sum)
+		return (1);
+	if (ka->final_sum > kb->final_sum)
+		return (-1);
+	return (0);
+}
+
+static void	finalize_top_loot(t_hunt_stats *out, t_kv_loot *loot, size_t loot_len)
+{
+	size_t	i;
+	size_t	max;
+
+	out->top_loot_count = 0;
+	if (!loot_len)
+		return ;
+	qsort(loot, loot_len, sizeof(loot[0]), kv_loot_cmp_desc_total);
+	max = (loot_len < (size_t)TM_TOP_LOOT) ? loot_len : (size_t)TM_TOP_LOOT;
+	out->top_loot_count = max;
+	i = 0;
+	while (i < max)
+	{
+		out->top_loot[i].name[0] = '\0';
+		if (loot[i].key)
+			snprintf(out->top_loot[i].name, sizeof(out->top_loot[i].name), "%s", loot[i].key);
+		out->top_loot[i].tt_ped = loot[i].tt_sum;
+		out->top_loot[i].total_mu_ped = loot[i].final_sum;
+		out->top_loot[i].mu_ped = loot[i].final_sum - loot[i].tt_sum;
+		out->top_loot[i].events = loot[i].events;
 		i++;
 	}
 }
@@ -565,6 +683,8 @@ typedef struct s_stats_ctx
 {
 	FILE			*f;
 	t_markup_db	mu;
+	t_kv_loot		*loot;
+	size_t		loot_len;
 	t_kv			*mobs;
 	size_t		mobs_len;
 	long			data_idx;
@@ -638,7 +758,8 @@ static void	ctx_process_line(t_stats_ctx *c, char *buf)
 		return ;
 	c->out->data_lines_read++;
 	csv_parse_fields(&f, buf);
-	process_fields(c->out, &c->mu, &c->mobs, &c->mobs_len, &f, c->sweat_enabled);
+	process_fields(c->out, &c->mu, &c->loot, &c->loot_len,
+					 &c->mobs, &c->mobs_len, &f, c->sweat_enabled);
 	c->data_idx++;
 }
 
@@ -654,8 +775,10 @@ static void	ctx_finish(t_stats_ctx *c)
 {
 	if (c->f)
 		fclose(c->f);
+	finalize_top_loot(c->out, c->loot, c->loot_len);
 	finalize_top_mobs(c->out, c->mobs, c->mobs_len);
 	compute_costs(c->out);
+	kv_loot_free(&c->loot, &c->loot_len);
 	kv_free(c->mobs, c->mobs_len);
 	markup_db_free(&c->mu);
 }

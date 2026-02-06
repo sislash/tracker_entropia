@@ -40,6 +40,53 @@ typedef struct s_win_backend
     HFONT		old_font;
 }	t_win_backend;
 
+/*
+** When the window is resized (fullscreen / maximize / manual resize), we must
+** recreate the backbuffer and the software pixel buffer.
+*/
+static void	ft_resize_buffers(t_window *w, int width, int height)
+{
+	t_win_backend	*b;
+	unsigned int	*new_pixels;
+	HDC			hdc;
+
+	if (!w || width <= 0 || height <= 0)
+		return ;
+	b = (t_win_backend *)w->backend_1;
+	if (!b || !b->hwnd)
+		return ;
+	if (width == w->width && height == w->height)
+		return ;
+	new_pixels = (unsigned int *)malloc((size_t)width * (size_t)height * 4);
+	if (!new_pixels)
+		return ;
+	if (w->pixels)
+		free(w->pixels);
+	w->pixels = new_pixels;
+	w->width = width;
+	w->height = height;
+	w->pitch = width;
+	memset(&b->bmi, 0, sizeof(b->bmi));
+	b->bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	b->bmi.bmiHeader.biWidth = width;
+	b->bmi.bmiHeader.biHeight = -height;
+	b->bmi.bmiHeader.biPlanes = 1;
+	b->bmi.bmiHeader.biBitCount = 32;
+	b->bmi.bmiHeader.biCompression = BI_RGB;
+	/* Recreate GDI backbuffer bitmap */
+	if (b->back_dc)
+	{
+		if (b->back_old_bmp)
+			SelectObject(b->back_dc, b->back_old_bmp);
+		if (b->back_bmp)
+			DeleteObject(b->back_bmp);
+		hdc = GetDC(b->hwnd);
+		b->back_bmp = CreateCompatibleBitmap(hdc, width, height);
+		ReleaseDC(b->hwnd, hdc);
+		b->back_old_bmp = (HBITMAP)SelectObject(b->back_dc, b->back_bmp);
+	}
+}
+
 static HFONT	ft_create_mono_font(HDC hdc)
 {
     int		px_h;
@@ -133,6 +180,15 @@ static LRESULT CALLBACK	ft_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         w->mouse_left_click = 1;
         return (0);
     }
+	if (msg == WM_SIZE && w)
+	{
+		int cw = (int)LOWORD(lparam);
+		int ch = (int)HIWORD(lparam);
+		/* Ignore minimize */
+		if (wparam != SIZE_MINIMIZED)
+			ft_resize_buffers(w, cw, ch);
+		return (0);
+	}
     if (msg == WM_ERASEBKGND)
         return (1);
     if (msg == WM_CLOSE)
@@ -184,14 +240,29 @@ int	window_init(t_window *w, const char *title, int width, int height)
     
     if (!w || width <= 0 || height <= 0)
         return (1);
+    /*
+     * * IMPORTANT:
+     ** On Windows, the system can emit WM_SIZE very early during CreateWindowEx.
+     ** If the caller provided an uninitialized t_window (stack garbage), our
+     ** WM_SIZE handler may try to free/resize w->pixels before we set it.
+     ** So we zero-init the struct up-front to make it safe.
+     */
+    memset(w, 0, sizeof(*w));
     b = (t_win_backend *)malloc(sizeof(*b));
     if (!b)
         return (1);
     memset(b, 0, sizeof(*b));
     b->hinst = GetModuleHandleA(NULL);
     b->class_name = "ft_window_class";
+    /* Make backend available early (WM_SIZE can happen during creation) */
+    w->backend_1 = (void *)b;
+    w->backend_2 = NULL;
+    w->backend_3 = NULL;
     if (ft_register_class(b) != 0)
+    {
+        w->backend_1 = NULL;
         return (free(b), 1);
+    }
     r.left = 0;
     r.top = 0;
     r.right = width;
@@ -201,14 +272,17 @@ int	window_init(t_window *w, const char *title, int width, int height)
                               CW_USEDEFAULT, CW_USEDEFAULT, r.right - r.left, r.bottom - r.top,
                               NULL, NULL, b->hinst, w);
     if (!b->hwnd)
+    {
+        w->backend_1 = NULL;
         return (free(b), 1);
+    }
     ShowWindow(b->hwnd, SW_SHOW);
     UpdateWindow(b->hwnd);
     
-    
     /* Create a compatible backbuffer to eliminate flicker when redrawing */
     {
-        HDC hdc;
+        HDC	hdc;
+        
         hdc = GetDC(b->hwnd);
         b->back_dc = CreateCompatibleDC(hdc);
         b->back_bmp = CreateCompatibleBitmap(hdc, width, height);
@@ -245,13 +319,11 @@ int	window_init(t_window *w, const char *title, int width, int height)
     w->key_q = 0;
     w->key_s = 0;
     w->key_d = 0;
-
-	w->mouse_x = 0;
-	w->mouse_y = 0;
-	w->mouse_left_click = 0;
-	    w->mouse_x = 0;
-	    w->mouse_y = 0;
-	    w->mouse_left_click = 0;
+    
+    w->mouse_x = 0;
+    w->mouse_y = 0;
+    w->mouse_left_click = 0;
+    
     w->use_buffer = 1;
     
     w->backend_1 = (void *)b;
@@ -261,6 +333,7 @@ int	window_init(t_window *w, const char *title, int width, int height)
     ft_clear_buf(w, 0xFFFFFFFFu);
     return (0);
 }
+
 
 void	window_poll_events(t_window *w)
 {

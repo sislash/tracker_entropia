@@ -63,6 +63,62 @@ static void	ft_clear_buf(t_window *w, unsigned int color)
     }
 }
 
+/*
+** Resize handler: recreate Pixmap backbuffer + XImage + pixel buffer so the
+** whole window remains drawable in fullscreen / maximized modes.
+*/
+static void	ft_resize_buffers(t_window *w, int width, int height)
+{
+	t_x11_backend	*b;
+	Visual			*vis;
+	int				depth;
+	Pixmap			new_back;
+	XImage			*new_img;
+	unsigned int	*new_pixels;
+
+	if (!w || width <= 0 || height <= 0)
+		return ;
+	b = (t_x11_backend *)w->backend_1;
+	if (!b || !b->d || !b->win)
+		return ;
+	if (width == w->width && height == w->height)
+		return ;
+	vis = DefaultVisual(b->d, b->screen);
+	depth = DefaultDepth(b->d, b->screen);
+	new_pixels = (unsigned int *)malloc((size_t)width * (size_t)height * 4);
+	if (!new_pixels)
+		return ;
+	new_img = XCreateImage(b->d, vis, (unsigned int)depth, ZPixmap, 0,
+					  (char *)new_pixels, width, height, 32, 0);
+	if (!new_img)
+	{
+		free(new_pixels);
+		return ;
+	}
+	new_back = XCreatePixmap(b->d, b->win, (unsigned int)width,
+						 (unsigned int)height, (unsigned int)depth);
+	if (!new_back)
+	{
+		new_img->data = (char *)new_pixels;
+		XDestroyImage(new_img);
+		return ;
+	}
+	if (b->back)
+		XFreePixmap(b->d, b->back);
+	if (b->img)
+	{
+		b->img->data = (char *)w->pixels;
+		XDestroyImage(b->img);
+	}
+	b->back = new_back;
+	b->img = new_img;
+	w->pixels = new_pixels;
+	w->width = width;
+	w->height = height;
+	w->pitch = new_img->bytes_per_line / 4;
+	ft_clear_buf(w, 0xFFFFFFFFu);
+}
+
 int	window_init(t_window *w, const char *title, int width, int height)
 {
     t_x11_backend	*b;
@@ -71,6 +127,8 @@ int	window_init(t_window *w, const char *title, int width, int height)
     
     if (!w || width <= 0 || height <= 0)
         return (1);
+	/* Make sure the caller didn't pass an uninitialized struct */
+	memset(w, 0, sizeof(*w));
     b = (t_x11_backend *)malloc(sizeof(*b));
     if (!b)
         return (1);
@@ -196,6 +254,10 @@ void	window_poll_events(t_window *w)
             w->mouse_x = ev.xmotion.x;
             w->mouse_y = ev.xmotion.y;
         }
+		else if (ev.type == ConfigureNotify)
+		{
+			ft_resize_buffers(w, ev.xconfigure.width, ev.xconfigure.height);
+		}
         else if (ev.type == ButtonPress)
         {
             w->mouse_x = ev.xbutton.x;

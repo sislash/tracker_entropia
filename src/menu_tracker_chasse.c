@@ -72,6 +72,65 @@ static void	fmt_linef(char *dst, size_t cap, const char *k, const char *fmt, ...
 }
 
 /* ************************************************************************** */
+/*  Pretty formatting helpers (aligned columns)                               */
+/* ************************************************************************** */
+
+static void	fmt_kv_aligned(char *dst, size_t cap,
+						const char *label, const char *value,
+						int label_w, int value_w)
+{
+	char	lab[256];
+	char	val[256];
+	int		lw;
+	int		vw;
+
+	if (!dst || cap == 0)
+		return ;
+	if (!label)
+		label = "";
+	if (!value)
+		value = "";
+	snprintf(lab, sizeof(lab), "%s", label);
+	snprintf(val, sizeof(val), "%s", value);
+	lw = (label_w <= 0) ? 24 : label_w;
+	vw = (value_w <= 0) ? 20 : value_w;
+	/* Left label + right-aligned value */
+	snprintf(dst, cap, "%-*.*s  %*.*s", lw, lw, lab, vw, vw, val);
+}
+
+static void	fmt_ped(char *dst, size_t cap, double ped)
+{
+	/* fixed width number with 4 decimals */
+	snprintf(dst, cap, "%10.4f PED", ped);
+}
+
+static void	fmt_pct(char *dst, size_t cap, double pct)
+{
+	snprintf(dst, cap, "%8.2f %%", pct);
+}
+
+static void	fmt_i64(char *dst, size_t cap, long v)
+{
+	snprintf(dst, cap, "%ld", v);
+}
+
+static void	fmt_ratio2(char *dst, size_t cap, double v)
+{
+	snprintf(dst, cap, "%8.2f", v);
+}
+
+static void	fmt_ratio6(char *dst, size_t cap, double v)
+{
+	snprintf(dst, cap, "%10.6f", v);
+}
+
+static void	fmt_sep(char *dst, size_t cap)
+{
+	/* visually stable separator for monospace font */
+	snprintf(dst, cap, "------------------------------------------------------------");
+}
+
+/* ************************************************************************** */
 /*  Weapons helpers                                                           */
 /* ************************************************************************** */
 
@@ -148,13 +207,21 @@ static double	ratio_pct(double num, double den)
 static void	fill_common_header(char lines[32][256], int *n, long offset)
 {
 	int	k;
+	char	v[256];
 	
 	k = 0;
 	snprintf(lines[k++], sizeof(lines[0]), "=== DASHBOARD CHASSE (fenetre) ===");
-	fmt_linef(lines[k++], sizeof(lines[0]), "Parser",
-			  "%s", parser_thread_is_running() ? "EN COURS" : "ARRETE");
-	fmt_linef(lines[k++], sizeof(lines[0]), "Offset session", "%ld ligne(s)", offset);
-	fmt_linef(lines[k++], sizeof(lines[0]), "CSV", "%s", tm_path_hunt_csv());
+	snprintf(lines[k++], sizeof(lines[0]), "Navigation: [Q] page precedente   [D] page suivante   [Echap] quitter");
+	lines[k++][0] = '\0';
+	fmt_sep(lines[k++], sizeof(lines[0]));
+	snprintf(v, sizeof(v), "%s", parser_thread_is_running() ? "EN COURS" : "ARRETE");
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Parser", v, 18, 38);
+	snprintf(v, sizeof(v), "%ld ligne(s)", offset);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Offset session", v, 18, 38);
+	/* CSV path can be long: keep aligned label + value, but show full path */
+	snprintf(v, sizeof(v), "%s", tm_path_hunt_csv());
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "CSV", v, 18, 38);
+	fmt_sep(lines[k++], sizeof(lines[0]));
 	lines[k++][0] = '\0';
 	*n = k;
 }
@@ -162,55 +229,154 @@ static void	fill_common_header(char lines[32][256], int *n, long offset)
 static void	dash_page_resume(const t_hunt_stats *s, char lines[32][256], int *n)
 {
 	int	k;
+	char	v[128];
 	
 	k = *n;
 	snprintf(lines[k++], sizeof(lines[0]), "[PAGE 1/%d] RESUME  (Q/D changer, Echap quitter)", DASH_COUNT);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Kills / Shots", "%ld / %ld", s->kills, s->shots);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Loot total", "%.4f PED (%ld PEC)", s->loot_ped, ped_to_pec(s->loot_ped));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Depense utilisee", "%.4f PED (%ld PEC)", s->expense_used, ped_to_pec(s->expense_used));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Net (profit/perte)", "%.4f PED (%ld PEC)", s->net_ped, ped_to_pec(s->net_ped));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Return", "%.2f %%", ratio_pct(s->loot_ped, s->expense_used));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Profit", "%.2f %%", ratio_pct(s->net_ped, s->expense_used));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Shots / kill", "%.2f", safe_div((double)s->shots, (double)s->kills));
+	lines[k++][0] = '\0';
+	/* Stats */
+	fmt_sep(lines[k++], sizeof(lines[0]));
+	snprintf(v, sizeof(v), "%ld / %ld", s->kills, s->shots);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Kills / Shots", v, 24, 24);
+	snprintf(v, sizeof(v), "%10.4f PED  (%ld PEC)", s->loot_ped, ped_to_pec(s->loot_ped));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Loot total", v, 24, 24);
+	snprintf(v, sizeof(v), "%10.4f PED  (%ld PEC)", s->expense_used, ped_to_pec(s->expense_used));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Depense utilisee", v, 24, 24);
+	snprintf(v, sizeof(v), "%10.4f PED  (%ld PEC)", s->net_ped, ped_to_pec(s->net_ped));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Net (profit/perte)", v, 24, 24);
+	lines[k++][0] = '\0';
+	/* Ratios */
+	fmt_pct(v, sizeof(v), ratio_pct(s->loot_ped, s->expense_used));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Return", v, 24, 24);
+	#ifdef TM_STATS_HAS_MARKUP
+	/* Return en incluant MU (si dispo) */
+	fmt_pct(v, sizeof(v), ratio_pct(s->loot_total_mu_ped, s->expense_used));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Return (TT+MU)", v, 24, 24);
+	#endif
+	fmt_pct(v, sizeof(v), ratio_pct(s->net_ped, s->expense_used));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Profit", v, 24, 24);
+	#ifdef TM_STATS_HAS_MARKUP
+	/* Profit en incluant MU */
+	fmt_pct(v, sizeof(v), ratio_pct(s->loot_total_mu_ped - s->expense_used, s->expense_used));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Profit (TT+MU)", v, 24, 24);
+	#endif
+	fmt_ratio2(v, sizeof(v), safe_div((double)s->shots, (double)s->kills));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Shots / kill", v, 24, 24);
+	fmt_sep(lines[k++], sizeof(lines[0]));
 	*n = k;
 }
 
 static void	dash_page_loot(const t_hunt_stats *s, char lines[32][256], int *n)
 {
 	int	k;
+	char	v[128];
+	char	tmp[64];
 	
 	k = *n;
 	snprintf(lines[k++], sizeof(lines[0]), "[PAGE 2/%d] LOOT  (Q/D changer, Echap quitter)", DASH_COUNT);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Loot / shot", "%.6f", safe_div(s->loot_ped, (double)s->shots));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Loot / kill", "%.4f", safe_div(s->loot_ped, (double)s->kills));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Loot events", "%ld", s->loot_events);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Sweat events", "%ld", s->sweat_events);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Sweat total", "%ld", s->sweat_total);
+	lines[k++][0] = '\0';
+	fmt_sep(lines[k++], sizeof(lines[0]));
+	/* Totaux TT / MU */
+	#ifdef TM_STATS_HAS_MARKUP
+	fmt_ped(v, sizeof(v), s->loot_tt_ped);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Loot TT", v, 24, 24);
+	fmt_ped(v, sizeof(v), s->loot_mu_ped);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Loot MU", v, 24, 24);
+	fmt_ped(v, sizeof(v), s->loot_total_mu_ped);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Loot TT+MU", v, 24, 24);
+	lines[k++][0] = '\0';
+	fmt_pct(v, sizeof(v), ratio_pct(s->loot_tt_ped, s->expense_used));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Return TT", v, 24, 24);
+	fmt_pct(v, sizeof(v), ratio_pct(s->loot_total_mu_ped, s->expense_used));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Return TT+MU", v, 24, 24);
+	lines[k++][0] = '\0';
+	#endif
+	fmt_ratio6(v, sizeof(v), safe_div(s->loot_ped, (double)s->shots));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Loot / shot", v, 24, 24);
+	snprintf(v, sizeof(v), "%10.4f", safe_div(s->loot_ped, (double)s->kills));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Loot / kill", v, 24, 24);
+	fmt_i64(v, sizeof(v), s->loot_events);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Loot events", v, 24, 24);
+	fmt_i64(v, sizeof(v), s->sweat_events);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Sweat events", v, 24, 24);
+	fmt_i64(v, sizeof(v), s->sweat_total);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Sweat total", v, 24, 24);
+	lines[k++][0] = '\0';
+	/* Top loot */
+	if (s->top_loot_count > 0)
+	{
+		size_t	i;
+		snprintf(lines[k++], sizeof(lines[0]), "Top loot (TT+MU):");
+		snprintf(lines[k++], sizeof(lines[0]), "  %-22s | %10s | %10s | %10s | %5s", "Item", "TT", "MU", "Total", "Evts");
+		snprintf(lines[k++], sizeof(lines[0]), "  %-22s-+-%10s-+-%10s-+-%10s-+-%5s", "----------------------", "----------", "----------", "----------", "-----");
+		i = 0;
+		while (i < s->top_loot_count && k < 32)
+		{
+			/* Keep names readable + aligned numeric columns */
+			/* Avoid -Wformat-truncation: clamp copy with precision */
+			snprintf(tmp, sizeof(tmp), "%.63s", s->top_loot[i].name);
+			/* truncate long names for stable columns */
+			tmp[22] = '\0';
+			snprintf(lines[k++], sizeof(lines[0]), "  %-22s | %10.4f | %+10.4f | %10.4f | %5ld",
+				tmp,
+				s->top_loot[i].tt_ped,
+				s->top_loot[i].mu_ped,
+				s->top_loot[i].total_mu_ped,
+				s->top_loot[i].events);
+			i++;
+		}
+		lines[k++][0] = '\0';
+	}
+	fmt_sep(lines[k++], sizeof(lines[0]));
 	*n = k;
 }
 
 static void	dash_page_expenses(const t_hunt_stats *s, char lines[32][256], int *n)
 {
 	int	k;
+	char	v[128];
 	
 	k = *n;
 	snprintf(lines[k++], sizeof(lines[0]), "[PAGE 3/%d] DEPENSES  (Q/D changer, Echap quitter)", DASH_COUNT);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Depenses (CSV)", "%.4f PED", s->expense_ped_logged);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Depenses (modele)", "%.4f PED", s->expense_ped_calc);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Cout / shot", "%.6f PED", s->cost_shot);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Source depense", "%s", s->expense_used_is_logged ? "log CSV" : "modele arme");
+	lines[k++][0] = '\0';
+	fmt_sep(lines[k++], sizeof(lines[0]));
+	fmt_ped(v, sizeof(v), s->expense_ped_logged);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Depenses (CSV)", v, 24, 24);
+	fmt_ped(v, sizeof(v), s->expense_ped_calc);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Depenses (modele)", v, 24, 24);
+	snprintf(v, sizeof(v), "%10.6f PED", s->cost_shot);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Cout / shot", v, 24, 24);
+	snprintf(v, sizeof(v), "%s", s->expense_used_is_logged ? "log CSV" : "modele arme");
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Source depense", v, 24, 24);
+	fmt_sep(lines[k++], sizeof(lines[0]));
 	*n = k;
 }
 
 static void	dash_page_results(const t_hunt_stats *s, char lines[32][256], int *n)
 {
 	int	k;
+	char	v[128];
 	
 	k = *n;
 	snprintf(lines[k++], sizeof(lines[0]), "[PAGE 4/%d] RESULTATS  (Q/D changer, Echap quitter)", DASH_COUNT);
-	fmt_linef(lines[k++], sizeof(lines[0]), "Net / shot", "%.6f", safe_div(s->net_ped, (double)s->shots));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Net / kill", "%.4f", safe_div(s->net_ped, (double)s->kills));
-	fmt_linef(lines[k++], sizeof(lines[0]), "Loot/Expense events", "%ld / %ld", s->loot_events, s->expense_events);
+	lines[k++][0] = '\0';
+	fmt_sep(lines[k++], sizeof(lines[0]));
+	fmt_ratio6(v, sizeof(v), safe_div(s->net_ped, (double)s->shots));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Net / shot", v, 24, 24);
+	#ifdef TM_STATS_HAS_MARKUP
+	/* Net en TT+MU */
+	fmt_ratio6(v, sizeof(v), safe_div(s->loot_total_mu_ped - s->expense_used, (double)s->shots));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Net(TT+MU)/shot", v, 24, 24);
+	#endif
+	snprintf(v, sizeof(v), "%10.4f", safe_div(s->net_ped, (double)s->kills));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Net / kill", v, 24, 24);
+	#ifdef TM_STATS_HAS_MARKUP
+	snprintf(v, sizeof(v), "%10.4f", safe_div(s->loot_total_mu_ped - s->expense_used, (double)s->kills));
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Net(TT+MU)/kill", v, 24, 24);
+	#endif
+	snprintf(v, sizeof(v), "%ld / %ld", s->loot_events, s->expense_events);
+	fmt_kv_aligned(lines[k++], sizeof(lines[0]), "Loot/Expense events", v, 24, 24);
+	fmt_sep(lines[k++], sizeof(lines[0]));
 	*n = k;
 }
 
@@ -237,6 +403,7 @@ static void	screen_message(t_window *w, const char *title, const char **lines, i
 	int		action;
 	const char	*items[1];
 	t_menu		m;
+	int		back_y;
 	
 	items[0] = "Retour";
 	menu_init(&m, items, 1);
@@ -253,7 +420,11 @@ static void	screen_message(t_window *w, const char *title, const char **lines, i
 			window_draw_text(w, 30, 30, title, 0x000000);
 		if (lines && n > 0)
 			w_draw_lines(w, 30, 70, lines, n);
-		menu_render(&m, w, 30, 520);
+		/* Keep the back button visible on any screen size */
+		back_y = w->height - 60;
+		if (back_y < 0)
+			back_y = 0;
+		menu_render(&m, w, 30, back_y);
 		window_present(w);
 		ft_sleep_ms(16);
 	}
@@ -339,7 +510,8 @@ static void	screen_weapon_choose(t_window *w)
 		items[i] = db.items[i].name;
 		i++;
 	}
-	items[i] = "Annuler";
+	/* Bouton retour (au lieu d'un simple Echap) */
+	items[i] = "Retour";
 	menu_init(&m, items, (int)db.count + 1);
 	while (w->running)
 	{
@@ -349,6 +521,9 @@ static void	screen_weapon_choose(t_window *w)
 		action = menu_update(&m, w);
 		if (action >= 0)
 		{
+			/* Dernier item = Retour */
+			if ((size_t)action == db.count)
+				break ;
 			if (action >= 0 && (size_t)action < db.count)
 			{
 				if (weapon_selected_save(tm_path_weapon_selected(), db.items[action].name) == 0)
@@ -410,18 +585,26 @@ static void	screen_stats_once(t_window *w)
 static void	screen_dashboard_live(t_window *w)
 {
 	t_dash_page	page;
+	t_menu			back;
+	const char		*back_items[1];
 	long		offset;
 	t_hunt_stats	s;
 	char		buf[32][256];
 	const char	*lines[32];
 	int		n;
 	int		i;
+	int			action;
 	
 	page = DASH_RESUME;
+	back_items[0] = "Retour menu";
+	menu_init(&back, back_items, 1);
 	while (w->running)
 	{
 		window_poll_events(w);
 		if (w->key_escape)
+			break ;
+		action = menu_update(&back, w);
+		if (action == 0)
 			break ;
 		if (w->key_d)
 			page = (t_dash_page)((page + 1) % DASH_COUNT);
@@ -448,6 +631,14 @@ static void	screen_dashboard_live(t_window *w)
 			i++;
 		}
 		w_draw_lines(w, 30, 30, lines, n);
+		/* Bouton retour visible (clic souris / Entree) */
+		/* Keep the back button visible on any screen size */
+		{
+			int back_y = w->height - 60;
+			if (back_y < 0)
+				back_y = 0;
+			menu_render(&back, w, 30, back_y);
+		}
 		window_present(w);
 		ft_sleep_ms(250);
 	}
