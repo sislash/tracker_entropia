@@ -121,7 +121,7 @@ static void	draw_item(t_menu *m, t_window *w, int x, int base_y, int idx)
         bg = 0x111111;
         fg = 0xFFFFFF;
     }
-    window_fill_rect(w, x, base_y + idx * item_h, 500, item_h - 4, bg);
+    window_fill_rect(w, x, base_y + idx * item_h, 600, item_h - 4, bg);
     window_draw_text(w, x + 12, base_y + idx * item_h + 8, m->items[idx], fg);
 }
 
