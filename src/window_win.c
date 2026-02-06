@@ -95,7 +95,7 @@ static HFONT	ft_create_mono_font(HDC hdc)
     if (!hdc)
         return (NULL);
     /* 16px-ish at current DPI. Negative = character height in pixels. */
-    px_h = -MulDiv(12, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    px_h = -MulDiv(8, GetDeviceCaps(hdc, LOGPIXELSY), 72);
     font = CreateFontA(px_h, 0, 0, 0, FW_NORMAL, 0, 0, 0,
                        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                        DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "Consolas");
